@@ -1,0 +1,305 @@
+/* Estilos generales */
+body {
+    background-color: #f8f9fc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* Contenedor principal */
+.container {
+    width: 100%;
+    max-width: 100%; /* evita que se limite a 960px */
+    margin: 40px auto;
+    padding: 20px 40px; /* espacio a los lados */
+    box-sizing: border-box; /* asegúrate que padding no empuje el ancho */
+}
+/* Título principal */
+.header h1 {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.header .subtitle {
+    color: #95a5a6;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* Bloques del formulario */
+.component-container {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+}
+
+/* Cada bloque visual */
+.form-block {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 35px; /* <-- Añadido */
+}
+
+
+/* Línea de campos juntos */
+.form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Estilo de cada grupo */
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 8px 10px;
+    border: 1px solid #dcdde1;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* Grupo para el checkbox */
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+/* Sección de características */
+#characteristicsSection h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.characteristic-field {
+    margin-bottom: 12px;
+}
+
+/* Mensaje de error o aviso */
+.no-characteristics,
+.error-message {
+    color: #888;
+    font-style: italic;
+}
+
+/* Botones */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-confirm, .btn-cancel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-confirm {
+    background-color: #27ae60;
+    color: #fff;
+}
+
+.btn-cancel {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.btn-confirm:hover {
+    background-color: #219150;
+}
+
+.btn-cancel:hover {
+    background-color: #c0392b;
+}
+
+/* Iconos */
+.icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Tabla */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th {
+    background-color: #f2f2f2;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #ddd;
+}
+
+.data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Contenedor de la tarjeta */
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 35px; /* Para separar tarjetas si hay más de una */
+}
+
+/* Header de la tarjeta */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-header h2 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Cuerpo de la tarjeta */
+.card-body {
+    padding: 20px;
+}
+
+/* Botones de acción */
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Botones editar y eliminar (iconos) */
+.btn-edit, .btn-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.btn-edit img, .btn-delete img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.btn-edit:hover img, .btn-delete:hover img {
+    opacity: 1;
+}
+
+/* Botón añadir */
+.btn-add {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-add:hover {
+    background-color: #2980b9;
+}
+
+/* Badges de estado (opcional, si usas) */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-inactive {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* Estilos para botones con imágenes */
+.actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.actions a img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .btn-add {
+        width: 100%;
+    }
+
+    .modal-content {
+        margin: 20% auto;
+        width: 95%;
+    }
+}

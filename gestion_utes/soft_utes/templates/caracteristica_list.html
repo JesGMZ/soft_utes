@@ -1,0 +1,241 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Gestión de Características{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos.css' %}">
+<style>
+  #formNuevaCaracteristica {
+    display: none;
+  }
+  .pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #e2e8f0;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="form-top">
+    <h1>Características</h1>
+  </div>
+
+  <div class="form-row">
+    <button id="btnMostrarFormulario" class="btn-guardar">Nueva Característica</button>
+  </div>
+
+  <!-- Formulario -->
+  <div class="card" id="formNuevaCaracteristica">
+    <form id="caracteristicaForm" method="POST" action="{% url 'caracteristica_create' %}">
+      {% csrf_token %}
+      <input type="hidden" id="idCaracteristica" name="idCaracteristica">
+
+      <div class="form-row">
+        <label for="idTipoComponente">Tipo de Componente:</label>
+        <select id="idTipoComponente" name="idTipoComponente" required>
+          <option value="">Seleccione una opción</option>
+          {% for tipo in tipos %}
+          <option value="{{ tipo.idTipoComponente }}">{{ tipo.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="descripcionCaracteristica">Descripción:</label>
+        <input type="text" id="descripcionCaracteristica" name="descripcionCaracteristica" required>
+      </div>
+
+      <div class="form-row">
+        <button type="button" class="btn-cancelar" id="btnCancelarFormulario">Cancelar</button>
+        <button type="submit" class="btn-guardar" id="btnGuardar">Guardar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista -->
+  <div class="card-lista">
+    <div class="table-header">
+      <h2>Lista de Características</h2>
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <div>
+          <label>Mostrar</label>
+          <select id="mostrar">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>registros</span>
+        </div>
+        <div>
+          <input type="text" id="buscar" class="search-input" placeholder="🔍 Buscar...">
+        </div>
+      </div>
+    </div>
+
+    <table class="equipos-table" id="tablaCaracteristicas">
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th>Tipo de Componente</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuerpo">
+        {% for caracteristica in caracteristicas %}
+        <tr>
+          <td>{{ caracteristica.descripcionCaracteristica }}</td>
+          <td>{{ caracteristica.idTipoComponente.nombre }}</td>
+          <td>
+            <button class="btn amarillo btn-edit"
+              data-id="{{ caracteristica.idCaracteristica }}"
+              data-descripcion="{{ caracteristica.descripcionCaracteristica }}"
+              data-tipo-componente="{{ caracteristica.idTipoComponente.idTipoComponente }}">
+              ✏️ Editar
+            </button>
+            <a href="{% url 'caracteristica_delete' caracteristica.idCaracteristica %}" class="btn rojo"
+               onclick="return confirm('¿Deseas eliminar esta característica?')">
+              🗑 Eliminar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btnMostrar = document.getElementById("btnMostrarFormulario");
+  const btnCancelar = document.getElementById("btnCancelarFormulario");
+  const form = document.getElementById("formNuevaCaracteristica");
+  const formElement = document.getElementById("caracteristicaForm");
+  const inputId = document.getElementById("idCaracteristica");
+  const inputDescripcion = document.getElementById("descripcionCaracteristica");
+  const selectTipo = document.getElementById("idTipoComponente");
+  const originalAction = "{% url 'caracteristica_create' %}";
+
+  btnMostrar.addEventListener("click", () => {
+    form.style.display = "block";
+    btnMostrar.style.display = "none";
+    formElement.action = originalAction;
+    formElement.reset();
+    inputId.value = '';
+  });
+
+  btnCancelar.addEventListener("click", () => {
+    form.style.display = "none";
+    btnMostrar.style.display = "inline-block";
+    formElement.action = originalAction;
+    inputId.value = '';
+    formElement.reset();
+  });
+
+  document.querySelectorAll(".btn-edit").forEach(btn => {
+    btn.addEventListener("click", () => {
+      inputId.value = btn.dataset.id;
+      inputDescripcion.value = btn.dataset.descripcion;
+      selectTipo.value = btn.dataset.tipoComponente;
+      formElement.action = `/caracteristicas/editar/${btn.dataset.id}/`;
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+    });
+  });
+
+  // Búsqueda y paginación
+  const tabla = document.getElementById("tablaCuerpo");
+  const buscar = document.getElementById("buscar");
+  const mostrar = document.getElementById("mostrar");
+  const paginacion = document.getElementById("paginacion");
+  const infoRegistros = document.getElementById("infoRegistros");
+
+  let todasLasFilas = Array.from(tabla.querySelectorAll("tr"));
+  let rows = [...todasLasFilas];
+  let paginaActual = 1;
+  let filasPorPagina = parseInt(mostrar.value);
+
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+    todasLasFilas.forEach(fila => fila.style.display = "none");
+    rows.forEach((fila, i) => {
+      if (i >= inicio && i < fin) fila.style.display = "";
+    });
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+  }
+
+  function actualizarInfo(pagina) {
+    const total = rows.length;
+    const inicio = (pagina - 1) * filasPorPagina + 1;
+    const fin = Math.min(inicio + filasPorPagina - 1, total);
+    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+  }
+
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+    paginacion.innerHTML = "";
+
+    if (pagina > 1) {
+      const prev = document.createElement("button");
+      prev.textContent = "Anterior";
+      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+      paginacion.appendChild(prev);
+    }
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === pagina) btn.classList.add("active");
+      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+      paginacion.appendChild(btn);
+    }
+
+    if (pagina < totalPaginas) {
+      const next = document.createElement("button");
+      next.textContent = "Siguiente";
+      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+      paginacion.appendChild(next);
+    }
+  }
+
+  function aplicarFiltro() {
+    const texto = buscar.value.toLowerCase();
+    rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  buscar.addEventListener("keyup", aplicarFiltro);
+  mostrar.addEventListener("change", () => {
+    filasPorPagina = parseInt(mostrar.value);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+
+  aplicarFiltro();
+});
+</script>
+{% endblock %}

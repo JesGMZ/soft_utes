@@ -1,0 +1,216 @@
+{% extends 'base_usuario.html' %}
+{% load static %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <header class="header">
+    <h1>Panel de Administración</h1>
+    <p class="subtitle">Bienvenido, {{ request.user.username }}</p>
+  </header>
+
+  <div class="dashboard-grid">
+    <div class="card-summary" onclick="toggleTable('equipos-table')">
+      <div class="card-content">
+        <div class="card-text">
+          <h3>Equipos</h3>
+          <p>{{ equipos_count }}</p>
+          <a href="#" class="details-link">Ver Detalles ></a>
+        </div>
+        <img src="{% static 'icons/equipos.png' %}" alt="Icono Equipos" class="card-icon">
+      </div>
+    </div>
+
+    <div class="card-summary" onclick="toggleTable('componentes-table')">
+      <div class="card-content">
+        <div class="card-text">
+          <h3>Componentes</h3>
+          <p>{{ componentes_count }}</p>
+          <a href="#" class="details-link">Ver Detalles ></a>
+        </div>
+        <img src="{% static 'icons/componentes.png' %}" alt="Icono Componentes" class="card-icon">
+      </div>
+    </div>
+
+    <div class="card-summary" onclick="toggleTable('asignaciones-table')">
+      <div class="card-content">
+        <div class="card-text">
+          <h3>Asignaciones</h3>
+          <p>{{ asignaciones_count }}</p>
+          <a href="#" class="details-link">Ver Detalles ></a>
+        </div>
+        <img src="{% static 'icons/asignaciones.png' %}" alt="Icono Asignaciones" class="card-icon">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla Equipos -->
+  <div class="tabla-responsive" id="equipos-table-container" style="display: block;">
+    <table id="equipos-table" class="equipos-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Modelo</th>
+          <th>Código Patrimonial</th>
+          <th>Estado</th>
+          <th>DETALLES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for equipo in equipos %}
+        <tr>
+          <td>{{ equipo.nombreEquipoInformatico }}</td>
+          <td>{{ equipo.idTipoEquipo.nombre }}</td>
+          <td>{% if equipo.idModelo %}{{ equipo.idModelo.nombreModelo }}{% else %}-{% endif %}</td>
+          <td>{{ equipo.codigoPatrimonial|default:"-" }}</td>
+          <td>{{ equipo.estado }}</td>
+          <td>
+            <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn-detalles">Ver detalles</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center; font-style: italic; color: #888;">
+            No hay equipos registrados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabla Componentes -->
+  <div class="tabla-responsive" id="componentes-table-container" style="display: none;">
+    <table id="componentes-table" class="equipos-table">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Equipo</th>
+          <th>Nombre de PC</th>
+          <th>Estado</th>
+          <th>DETALLES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in componentes %}
+        <tr>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ comp.idModelo.nombreModelo }}</td>
+          <td>{{ comp.idEquipoInformatico.idTipoEquipo.nombre }}</td>
+          <td>{{ comp.idEquipoInformatico.nombreEquipoInformatico }}</td>
+          <td>{{ comp.estado }}</td>
+          <td>
+            <a href="{% url 'componente_detalle' comp.idComponente %}" class="btn-detalles">Ver Detalles</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; font-style: italic; color: #888;">
+            No hay componentes registrados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabla Asignaciones -->
+  <div class="tabla-responsive" id="asignaciones-table-container" style="display: none;">
+    <table id="asignaciones-table" class="equipos-table">
+      <thead>
+        <tr>
+          <th>Equipo</th>
+          <th>Tipo</th>
+          <th>Modelo</th>
+          <th>Código Patrimonial</th>
+          <th>Fecha Asignación</th>
+          <th>Acta</th>
+          <th>DETALLES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asig in asignaciones %}
+        <tr>
+          <td>{{ asig.idEquipoInformatico.nombreEquipoInformatico }}</td>
+          <td>{{ asig.idEquipoInformatico.idTipoEquipo.nombre }}</td>
+          <td>{{ asig.idEquipoInformatico.idModelo.nombreModelo }}</td>
+          <td>{{ asig.idEquipoInformatico.codigoPatrimonial }}</td>
+          <td>{{ asig.fechaAsignacion|date:"d/m/Y H:i" }}</td>
+          <td>{{ asig.idActaSalida.codReq }}</td>
+          <td>
+            <a href="{% url 'detalle_acta_salida' asig.idActaSalida.pk %}" class="btn-detalles">Ver Detalles</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; font-style: italic; color: #888;">
+            No hay asignaciones registradas.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination-info">
+    Mostrando {{ componentes.count }} de {{ componentes_count }} registros
+  </div>
+</div>
+
+<!-- Script de visualización -->
+<script>
+  function toggleTable(tableId) {
+    const containers = {
+      'equipos-table': 'equipos-table-container',
+      'componentes-table': 'componentes-table-container',
+      'asignaciones-table': 'asignaciones-table-container'
+    };
+
+    Object.values(containers).forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+
+    document.getElementById(containers[tableId]).style.display = 'block';
+
+    const table = document.getElementById(tableId);
+    const paginationInfo = document.querySelector('.pagination-info');
+
+    if (tableId === 'equipos-table') {
+      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ equipos_count }} equipos`;
+    } else if (tableId === 'asignaciones-table') {
+      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ asignaciones_count }} asignaciones`;
+    } else {
+      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ componentes_count }} registros`;
+    }
+  }
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const componentesTable = document.getElementById("componentes-table");
+    const filas = componentesTable.querySelectorAll("tbody tr");
+
+    filas.forEach((fila) => {
+      const celdaEquipo = fila.cells[3];
+      const celdaNombrePC = fila.cells[4];
+
+      if (celdaEquipo && celdaEquipo.textContent.trim() === "") {
+        celdaEquipo.textContent = "SIN ASIGNAR";
+      }
+
+      if (celdaNombrePC && celdaNombrePC.textContent.trim() === "") {
+        celdaNombrePC.textContent = "SIN ASIGNAR";
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Lista de Usuarios{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<style>
+  .estado {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.8rem;
+    display: inline-block;
+    min-width: 70px;
+    text-align: center;
+  }
+  .activo {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  .inactivo {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  .search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .search-container h2 {
+    margin: 0;
+  }
+  .pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #e2e8f0;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-top">
+    <h1>Lista de Usuarios</h1>
+  </div>
+
+  <div class="card-lista">
+    <div class="search-container">
+      <h2>Usuarios del Sistema</h2>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <div>
+          <label>Mostrar</label>
+          <select id="mostrar">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>registros</span>
+        </div>
+        <input type="text" class="search-input" placeholder="🔍 Buscar usuarios..." id="searchInput">
+      </div>
+    </div>
+
+  <div class="tabla-responsive">
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombres</th>
+          <th>Apellidos</th>
+          <th>Correo</th>
+          <th>Estado</th>
+          <th>Último inicio</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {% for usuario in usuarios %}
+        <tr>
+          <td>{{ usuario.username }}</td>
+          <td>{{ usuario.first_name }}</td>
+          <td>{{ usuario.last_name }}</td>
+          <td>{{ usuario.email }}</td>
+          <td>
+            <span class="estado {% if usuario.is_active %}activo">Activo{% else %}inactivo">Inactivo{% endif %}</span>
+          </td>
+          <td>{{ usuario.last_login|default:"Nunca"|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center">No hay usuarios registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("tableBody");
+    const mostrar = document.getElementById("mostrar");
+    const paginacion = document.getElementById("paginacion");
+    const infoRegistros = document.getElementById("infoRegistros");
+
+    let todasLasFilas = Array.from(tableBody.querySelectorAll("tr"));
+    let rows = [...todasLasFilas];
+    let paginaActual = 1;
+    let filasPorPagina = parseInt(mostrar.value);
+
+    function mostrarPagina(pagina) {
+      const inicio = (pagina - 1) * filasPorPagina;
+      const fin = inicio + filasPorPagina;
+      todasLasFilas.forEach(fila => fila.style.display = "none");
+      rows.forEach((fila, i) => {
+        if (i >= inicio && i < fin) fila.style.display = "";
+      });
+      actualizarInfo(pagina);
+      actualizarPaginacion(pagina);
+    }
+
+    function actualizarInfo(pagina) {
+      const total = rows.length;
+      const inicio = (pagina - 1) * filasPorPagina + 1;
+      const fin = Math.min(inicio + filasPorPagina - 1, total);
+      infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+    }
+
+    function actualizarPaginacion(pagina) {
+      const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+      paginacion.innerHTML = "";
+
+      if (pagina > 1) {
+        const prev = document.createElement("button");
+        prev.textContent = "Anterior";
+        prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+        paginacion.appendChild(prev);
+      }
+
+      for (let i = 1; i <= totalPaginas; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        if (i === pagina) btn.classList.add("active");
+        btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+        paginacion.appendChild(btn);
+      }
+
+      if (pagina < totalPaginas) {
+        const next = document.createElement("button");
+        next.textContent = "Siguiente";
+        next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+        paginacion.appendChild(next);
+      }
+    }
+
+    function aplicarFiltro() {
+      const texto = searchInput.value.toLowerCase();
+      rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    }
+
+    searchInput.addEventListener("input", aplicarFiltro);
+    mostrar.addEventListener("change", () => {
+      filasPorPagina = parseInt(mostrar.value);
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    });
+
+    aplicarFiltro();
+  });
+</script>
+{% endblock %}

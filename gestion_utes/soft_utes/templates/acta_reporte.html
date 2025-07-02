@@ -1,0 +1,203 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Guía de Acta de Salida{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_reporte_actas.css' %}">
+<style>
+  @media print {
+    header, footer, nav, .sidebar, .no-print, .navbar, .wrapper {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 0;
+      box-shadow: none !important;
+      border: none
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Botón Imprimir -->
+  <div class="no-print" style="text-align: right; margin-bottom: 15px;">
+    <button class="btn verde" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <img src="{% static 'icons/logo.jpeg' %}" alt="LOGO DE LA EMPRESA" style="width: 180px; height: 100px; object-fit: contain;">
+      </div>
+      <div style="text-align: center;">
+        <h2 style="margin: 0;">Guía de Acta de Salida</h2>
+        <p style="margin: 0;"><strong>(Asignación)</strong></p>
+      </div>
+      <div>
+        <table style="font-size: 14px;">
+          <tr>
+            <td><strong>Código:</strong></td>
+            <td>{{ acta.idFormato.codigoFormato }}</td>
+          </tr>
+          <tr>
+            <td><strong>Versión:</strong></td>
+            <td>{{ acta.idFormato.versionFormato }}</td>
+          </tr>
+          <tr>
+            <td><strong>Fecha:</strong></td>
+            <td>{{ acta.idFormato.fechaFormato|date:"d-m-Y" }}</td>
+          </tr>
+          <tr>
+            <td><strong>Página:</strong></td>
+            <td>1 de 1</td> 
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <hr style="margin: 20px 0;">
+
+    <div class="form-row" style="display: flex; justify-content: flex-start; align-items: center; gap: 40px;">
+      <div>
+        <label><strong>COD-REQ:</strong></label>
+        <input type="text" class="text" style="text-align: left;" value="{{ acta.codReq }}" readonly>
+      </div>
+      <div>
+        <label><strong>FECHA:</strong></label>
+        <input type="text" class="text" style="text-align: left;" value="{{ acta.fechaRegistro|date:'d/m/Y' }}" readonly>
+      </div>
+    </div>
+
+    <br>
+
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Descripción</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Serie</th>
+          <th>Código Patrimonio</th>
+          <th>Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignacion in equipos_asignados %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ asignacion.idEquipoInformatico.descripcionEquipo }}</td>
+          <td>{{ asignacion.idEquipoInformatico.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ asignacion.idEquipoInformatico.idModelo.nombreModelo }}</td>
+          <td>{{ asignacion.idEquipoInformatico.numeroSerie }}</td>
+          <td>{{ asignacion.idEquipoInformatico.codigoPatrimonial }}</td>
+          <td>{{ asignacion.idEquipoInformatico.observacionEquipo|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;">No hay equipos asignados a esta acta.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <br>
+
+    <!-- BOTÓN para abrir el modal -->
+    <button class="btn azul no-print" onclick="abrirModal()">✏️ Ingresar / Editar Datos</button>
+
+    <br><br>
+
+    <div class="form-row">
+      <div style="flex: 1;">
+        <h3>Origen</h3>
+        <p class="oficina"><strong>Oficina/Dependencia:</strong> {{ acta.oficina|default:"_______________" }}</p>
+        <p class="entregado"><strong>Entregado por:</strong> {{ acta.entregadoPor|default:"_______________" }}</p>
+        <p class="tipoEntrega"><strong>Tipo de Entrega:</strong> {{ acta.tipoEntrega|default:"_______________" }}</p>
+        <div class="signature-box">Sello / Firma</div>
+      </div>
+
+      <div style="flex: 1;">
+        <h3>Destino</h3>
+        <p class="establecimiento"><strong>Establecimiento:</strong> {{ acta.Establecimiento|default:"_______________" }}</p>
+        <p class="recibido"><strong>Recibido por:</strong> {{ acta.recibidoPor|default:"_______________" }}</p>
+        <p class="fechaRecepcion"><strong>Fecha:</strong> {{ acta.fechaRecepcion|date:"d/m/Y"|default:"_______________" }}</p>
+        <div class="signature-box">Sello / Firma</div>
+      </div>
+    </div>
+
+    <p class="note">
+      Aviso, se detalla el aviso en caso de cualquier copia del documento
+    </p>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modalIngreso" class="modal-overlay" style="display: none;">
+  <div class="modal">
+    <h3>Ingresar Datos</h3>
+    <form id="formModal">
+      <div class="modal-group">
+        <label>Oficina/Dependencia:</label>
+        <input type="text" id="oficina" placeholder="Ej. Oficina de TI">
+      </div>
+      <div class="modal-group">
+        <label>Entregado por:</label>
+        <input type="text" id="entregado" placeholder="Nombre del responsable">
+      </div>
+      <div class="modal-group">
+        <label>Tipo de Entrega:</label>
+        <input type="text" id="tipoEntrega" placeholder="Ej. Asignación">
+      </div>
+      <div class="modal-group">
+        <label>Establecimiento:</label>
+        <input type="text" id="establecimiento" placeholder="Ej. Centro de Salud...">
+      </div>
+      <div class="modal-group">
+        <label>Recibido por:</label>
+        <input type="text" id="recibido" placeholder="Nombre del receptor">
+      </div>
+      <div class="modal-group">
+        <label>Fecha:</label>
+        <input type="date" id="fechaRecepcion">
+      </div>
+      <div style="text-align: right;">
+        <button type="button" class="btn azul" onclick="guardarDatos()">Guardar</button>
+        <button type="button" class="btn rojo" onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function abrirModal() {
+    document.getElementById("modalIngreso").style.display = "flex";
+  }
+
+  function cerrarModal() {
+    document.getElementById("modalIngreso").style.display = "none";
+  }
+
+  function guardarDatos() {
+    document.querySelector("p.oficina").innerHTML = "<strong>Oficina/Dependencia:</strong> " + document.getElementById("oficina").value;
+    document.querySelector("p.entregado").innerHTML = "<strong>Entregado por:</strong> " + document.getElementById("entregado").value;
+    document.querySelector("p.tipoEntrega").innerHTML = "<strong>Tipo de Entrega:</strong> " + document.getElementById("tipoEntrega").value;
+    document.querySelector("p.establecimiento").innerHTML = "<strong>Establecimiento:</strong> " + document.getElementById("establecimiento").value;
+    document.querySelector("p.recibido").innerHTML = "<strong>Recibido por:</strong> " + document.getElementById("recibido").value;
+    document.querySelector("p.fechaRecepcion").innerHTML = "<strong>Fecha:</strong> " + document.getElementById("fechaRecepcion").value;
+    cerrarModal();
+  }
+</script>
+{% endblock %}

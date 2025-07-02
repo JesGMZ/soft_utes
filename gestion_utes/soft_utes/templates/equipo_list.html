@@ -1,0 +1,420 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Gestión de Equipos Informáticos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<link rel="stylesheet" href="{% static 'extras.css' %}">
+<style>
+  #formEquipo { display: none; }
+  .btn.amarillo { background-color: #ecc94b; color: #1a202c; }
+  .radio-row { align-items: center; }
+  .radio-label { width: auto; margin-right: 15px; font-weight: 600; }
+  .radio-group { display: flex; gap: 20px; align-items: center; }
+  #grupoImagenPreview { align-items: center; gap: 10px; }
+
+  .pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #e2e8f0;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+  }
+
+  .select-row {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Equipos Informáticos</h1>
+
+  <div class="form-top">
+    <label for="tipoVisual">Tipo de Equipo:</label>
+    <select id="tipoVisual">
+      <option value="">-- Seleccione --</option>
+      {% for tipo in tipos %}
+      <option value="{{ tipo.idTipoEquipo }}">{{ tipo.nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="card" id="formEquipo">
+    <form id="formularioEquipo" method="POST" action="{% url 'equipo_create' %}">
+      {% csrf_token %}
+      <input type="hidden" id="idEquipoInformatico" name="idEquipoInformatico">
+      <input type="hidden" id="tipoHidden" name="idTipoEquipo">
+      <div class="form-row">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombreEquipoInformatico" required>
+
+        <label for="serie">Nº de Serie:</label>
+        <input type="text" id="serie" name="numeroSerie">
+
+        <label for="modeloInput">Modelo:</label>
+        <input type="text" id="modeloInput" list="listaModelos" autocomplete="off">
+        <input type="hidden" id="modelo" name="idModelo">
+        <datalist id="listaModelos">
+          {% for modelo in modelos %}
+            <option value="{{ modelo.nombreModelo }}" data-id="{{ modelo.idModelo }}" data-imagen="{% if modelo.Imagen %}{{ modelo.Imagen.url }}{% endif %}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
+      <div class="form-row">
+        <label for="patrimonio">Cod. Patrimonio:</label>
+        <input type="text" id="patrimonio" name="codigoPatrimonial">
+
+        <label for="garantia">Año de Garantía:</label>
+        <input type="number" id="garantia" name="añoGarantia">
+
+        <label for="observacion">Observación:</label>
+        <input type="text" id="observacion" name="observacionEquipo">
+      </div>
+
+      <div class="form-row radio-row">
+        <label class="radio-label">Tipo Descripción:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="descripcionEquipo" value="De Marca" checked> De Marca</label>
+          <label><input type="radio" name="descripcionEquipo" value="Compatible"> Compatible</label>
+          <label><input type="radio" name="descripcionEquipo" value="Otros"> Otros</label>
+        </div>
+      </div>
+
+      <div class="form-row" id="grupoImagenPreview" style="display: none;">
+        <label>Imagen actual:</label>
+        <img id="imagenPreview" src="" style="max-width: 120px; border: 1px solid #ccc; padding: 4px;">
+      </div>
+
+      <button type="submit" class="btn-guardar">Guardar</button>
+      <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
+    </form>
+  </div>
+
+  <div class="form-row">
+    <button id="btnMostrarFormulario" class="btn-guardar">Nuevo Equipo</button>
+  </div>
+
+  <div class="card-lista">
+    <div class="table-header">
+      <h2>Lista de Equipos Informáticos</h2>
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <div>
+          <label>Mostrar</label>
+          <select id="mostrar">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>registros</span>
+        </div>
+        <div>
+          <input type="text" id="buscarEquipos" class="search-input" placeholder="🔍 Buscar...">
+          <select id="filtroEstado" class="select-row">
+            <option value="">Todos</option>
+            <option value="activo">ACTIVO</option>
+            <option value="inactivo">INACTIVO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  <div class="tabla-responsive">
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Equipo</th>
+          <th>N° Serie</th>
+          <th>Patrimonio</th>
+          <th>Nombre Equipo</th>
+          <th>Estado</th>
+          <th>Operaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for equipo in equipos %}
+        <tr>
+          <td>{{ equipo.idTipoEquipo.nombre }}</td>
+          <td>{{ equipo.numeroSerie }}</td>
+          <td>{{ equipo.codigoPatrimonial }}</td>
+          <td>{{ equipo.nombreEquipoInformatico }}</td>
+          <td><span class="estado {{ equipo.estado|lower }}">{{ equipo.estado }}</span></td>
+          <td>
+            <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn azul">Ver</a>
+            <button class="btn amarillo"
+              data-id="{{ equipo.idEquipoInformatico }}"
+              data-nombre="{{ equipo.nombreEquipoInformatico }}"
+              data-serie="{{ equipo.numeroSerie|default:'' }}"
+              data-modelo="{% if equipo.idModelo %}{{ equipo.idModelo.idModelo }}{% endif %}"
+              data-tipo="{{ equipo.idTipoEquipo.idTipoEquipo }}"
+              data-patrimonio="{{ equipo.codigoPatrimonial|default:'' }}"
+              data-observacion="{{ equipo.observacionEquipo|default:'' }}"
+              data-garantia="{{ equipo.añoGarantia|default:'' }}"
+              data-descripcion="{{ equipo.descripcionEquipo }}"
+              data-estado="{{ equipo.estado }}"
+            >Editar</button>
+            <a href="{% url 'equipo_delete' equipo.idEquipoInformatico %}" class="btn rojo">Dar de Baja</a>
+            <a href="{% url 'asignar_componentes' idEquipoInformatico=equipo.idEquipoInformatico %}" class="btn morado">Asignar Componentes</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+ </div>
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const tablaEquipos = document.querySelector(".equipos-table tbody");
+  const buscar = document.getElementById("buscarEquipos");
+  const filtroEstado = document.getElementById("filtroEstado");
+  const mostrar = document.getElementById("mostrar");
+  const paginacion = document.getElementById("paginacion");
+  const infoRegistros = document.getElementById("infoRegistros");
+
+  const btnMostrar = document.getElementById("btnMostrarFormulario");
+  const btnCancelar = document.getElementById("btnCancelarFormulario");
+  const form = document.getElementById("formEquipo");
+  const formAction = document.getElementById("formularioEquipo");
+  const originalAction = "{% url 'equipo_create' %}";
+
+  const idInput = document.getElementById("idEquipoInformatico");
+  const nombreInput = document.getElementById("nombre");
+  const serieInput = document.getElementById("serie");
+  const modeloInput = document.getElementById("modelo");
+  const tipoHidden = document.getElementById("tipoHidden"); // input hidden real
+  const tipoVisual = document.getElementById("tipoVisual"); // select visible
+  const patrimonioInput = document.getElementById("patrimonio");
+  const observacionInput = document.getElementById("observacion");
+  const garantiaInput = document.getElementById("garantia");
+  const imagenPreview = document.getElementById("imagenPreview");
+  const grupoImagenPreview = document.getElementById("grupoImagenPreview");
+
+  const modeloInputText = document.getElementById("modeloInput");
+  const modeloInputHidden = document.getElementById("modelo");
+  const dataListModelos = document.getElementById("listaModelos");
+
+  // Sincronizar tipoVisual con tipoHidden
+  tipoVisual.addEventListener("change", () => {
+    tipoHidden.value = tipoVisual.value;
+  });
+
+  modeloInputText.addEventListener("input", () => {
+  const valor = modeloInputText.value.trim().toLowerCase();
+  const opciones = dataListModelos.querySelectorAll("option");
+
+  let encontrado = false;
+  opciones.forEach(opcion => {
+    if (opcion.value.toLowerCase() === valor) {
+      modeloInputHidden.value = opcion.dataset.id;  // ← Aquí se asigna el ID real
+      encontrado = true;
+
+      const imagenUrl = opcion.dataset.imagen;
+      if (imagenUrl) {
+        imagenPreview.src = imagenUrl;
+        grupoImagenPreview.style.display = "flex";
+      } else {
+        imagenPreview.src = "";
+        grupoImagenPreview.style.display = "none";
+      }
+    }
+  });
+
+  if (!encontrado) {
+    modeloInputHidden.value = "";  // ← Si no coincide, no se envía nada
+    imagenPreview.src = "";
+    grupoImagenPreview.style.display = "none";
+  }
+});
+
+  btnMostrar.addEventListener("click", () => {
+    form.style.display = "block";
+    btnMostrar.style.display = "none";
+    formAction.action = originalAction;
+    formAction.reset();
+    idInput.value = "";
+    tipoHidden.value = tipoVisual.value;
+    imagenPreview.src = "";
+    grupoImagenPreview.style.display = "none";
+  });
+
+  btnCancelar.addEventListener("click", () => {
+    form.style.display = "none";
+    btnMostrar.style.display = "inline-block";
+    formAction.reset();
+    idInput.value = "";
+    formAction.action = originalAction;
+    tipoVisual.value = "";
+    tipoHidden.value = "";
+    imagenPreview.src = "";
+    grupoImagenPreview.style.display = "none";
+  });
+
+  document.querySelectorAll(".btn.amarillo").forEach(btn => {
+    btn.addEventListener("click", () => {
+      idInput.value = btn.dataset.id;
+      nombreInput.value = btn.dataset.nombre;
+      serieInput.value = btn.dataset.serie;
+
+      const modeloOption = [...dataListModelos.options].find(opt => opt.dataset.id === btn.dataset.modelo);
+      if (modeloOption) {
+        modeloInputText.value = modeloOption.value;
+        modeloInputHidden.value = modeloOption.dataset.id;
+      }
+
+      patrimonioInput.value = btn.dataset.patrimonio;
+      observacionInput.value = btn.dataset.observacion;
+      garantiaInput.value = btn.dataset.garantia;
+
+      // Tipo equipo
+      tipoVisual.value = btn.dataset.tipo;
+      tipoHidden.value = btn.dataset.tipo;
+
+      document.querySelectorAll('input[name="descripcionEquipo"]').forEach(radio => {
+        radio.checked = (radio.value.toLowerCase() === btn.dataset.descripcion.toLowerCase());
+      });
+
+      const estadoSelect = document.getElementById("estado");
+      if (estadoSelect) {
+        for (const option of estadoSelect.options) {
+          option.selected = option.value === btn.dataset.estado;
+        }
+      }
+
+      modeloInput.dispatchEvent(new Event("change"));
+
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+      formAction.action = `/equipos-informaticos/editar/${btn.dataset.id}/`;
+    });
+  });
+
+  modeloInput.addEventListener("change", function () {
+    const selectedOption = modeloInput.options[modeloInput.selectedIndex];
+    const imagenUrl = selectedOption?.dataset?.imagen;
+    if (imagenUrl) {
+      imagenPreview.src = imagenUrl;
+      grupoImagenPreview.style.display = "flex";
+    } else {
+      imagenPreview.src = "";
+      grupoImagenPreview.style.display = "none";
+    }
+  });
+
+  // Paginación y filtros
+  let todasLasFilas = Array.from(tablaEquipos.querySelectorAll("tr"));
+  let rows = [...todasLasFilas];
+  let paginaActual = 1;
+  let filasPorPagina = parseInt(mostrar.value);
+
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+    todasLasFilas.forEach(f => f.style.display = "none");
+    rows.forEach((fila, i) => {
+      if (i >= inicio && i < fin) fila.style.display = "";
+    });
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+  }
+
+  function actualizarInfo(pagina) {
+    const total = rows.length;
+    const inicio = (pagina - 1) * filasPorPagina + 1;
+    const fin = Math.min(inicio + filasPorPagina - 1, total);
+    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+  }
+
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+    paginacion.innerHTML = "";
+
+    if (pagina > 1) {
+      const prev = document.createElement("button");
+      prev.textContent = "Anterior";
+      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+      paginacion.appendChild(prev);
+    }
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === pagina) btn.classList.add("active");
+      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+      paginacion.appendChild(btn);
+    }
+
+    if (pagina < totalPaginas) {
+      const next = document.createElement("button");
+      next.textContent = "Siguiente";
+      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+      paginacion.appendChild(next);
+    }
+  }
+
+  function aplicarFiltro() {
+    const texto = buscar.value.toLowerCase();
+    const estadoSeleccionado = filtroEstado.value;
+    rows = todasLasFilas.filter(row => {
+      const contenido = row.textContent.toLowerCase();
+      const coincideTexto = contenido.includes(texto);
+      if (!estadoSeleccionado) return coincideTexto;
+      const estado = row.querySelector("td:nth-child(5)").innerText.toLowerCase();
+      return coincideTexto && estado === estadoSeleccionado;
+    });
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  buscar.addEventListener("keyup", aplicarFiltro);
+  filtroEstado.addEventListener("change", aplicarFiltro);
+  mostrar.addEventListener("change", () => {
+    filasPorPagina = parseInt(mostrar.value);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+
+  aplicarFiltro();
+
+    formAction.addEventListener("submit", function (e) {
+    tipoHidden.value = tipoVisual.value;
+
+    if (!tipoHidden.value) {
+      e.preventDefault();
+      alert("Debe seleccionar un tipo de equipo.");
+      return;
+    }
+
+    if (!modeloInputHidden.value) {
+      e.preventDefault();
+      alert("Debe seleccionar un modelo válido de la lista.");
+      return;
+    }
+  });
+
+});
+
+</script>
+{% endblock %}

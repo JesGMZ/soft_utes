@@ -1,0 +1,56 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Detalle del Componente{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'detalle_estilos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Componente Informático</h1>
+  <h2>Datos del Componente</h2>
+
+  <div class="subtitulo-boton">
+    <form method="post" action="">
+      {% csrf_token %}
+      <button class="btn verde" onclick="window.print()">IMPRIMIR</button>
+    </form>
+  </div>
+
+  <div class="card form-top">
+    <!-- Imagen del componente -->
+    <div class="imagen-contenedor">
+      {% if componente.idModelo.Imagen %}
+        <img src="{{ componente.idModelo.Imagen.url }}" alt="Imagen del componente" style="max-width: 100%; border: 1px solid #ccc; padding: 4px;">
+      {% else %}
+        <div class="imagen-placeholder">SIN IMAGEN</div>
+      {% endif %}
+    </div>
+
+    <!-- Primera columna de datos -->
+    <div class="detalle-columna">
+      <div class="form-row"><label>NOMBRE:</label><div>{{ componente.idTipoComponente.nombre }}</div></div>
+      <div class="form-row"><label>NÚMERO DE SERIE:</label><div>{{ componente.numeroSerie }}</div></div>
+      <div class="form-row"><label>DESCRIPCIÓN:</label><div>{{ componente.descripcionComponente }}</div></div>
+      <div class="form-row"><label>MARCA:</label><div>{{ componente.idModelo.idMarca.nombreMarca }}</div></div>
+      <div class="form-row"><label>MODELO:</label><div>{{ componente.idModelo.nombreModelo }}</div></div>
+    </div>
+
+    <!-- Segunda columna de características -->
+    <div class="detalle-columna">
+    {% for caracteristica in caracteristicas %}
+        <div class="form-row">
+        <label>{{ caracteristica.idCaracteristica.descripcionCaracteristica|upper }}:</label>
+        <div>{{ caracteristica.valor }}</div>
+        </div>
+    {% empty %}
+        <div class="form-row">
+        <label>CARACTERÍSTICAS:</label>
+        <div style="font-style: italic;">No hay características registradas.</div>
+        </div>
+    {% endfor %}
+    <div class="form-row"><label>ESTADO:</label><div>{{ componente.estado }}</div></div>
+    </div>
+{% endblock %}

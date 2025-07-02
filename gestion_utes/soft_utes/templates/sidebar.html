@@ -1,0 +1,138 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'estilos_sidebar.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+<div class="sidebar-container">
+  <div class="sidebar bg-primary text-white">
+    <div class="sidebar-header">
+      <h5 class="sidebar-title">Menú Principal</h5>
+    </div>
+
+    <ul class="nav nav-pills flex-column">
+
+      <li class="nav-item">
+        <a href="{% url 'dashboard_admin' %}" class="nav-link">
+          <span class="nav-text">Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'marca_list' %}" class="nav-link">
+          <span class="nav-text">Marca</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'modelo_list' %}" class="nav-link">
+          <span class="nav-text">Modelo</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_establecimientos' %}" class="nav-link">
+          <span class="nav-text">Establecimiento</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_areas' %}" class="nav-link">
+          <span class="nav-text">Área</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_subareas' %}" class="nav-link">
+          <span class="nav-text">Sub-área</span>
+        </a>
+      </li>
+
+      <li class="nav-section-title">
+        <span>Equipos Informáticos</span>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'equipo_list' %}" class="nav-link">
+          <span class="nav-text">Equipos Informáticos</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'tipoequipo_list' %}" class="nav-link">
+          <span class="nav-text">Tipo de Equipos</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'tipocomponente_list' %}" class="nav-link">
+          <span class="nav-text">Tipo de Componentes</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'caracteristica_list' %}" class="nav-link">
+          <span class="nav-text">Características</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'componente_list' %}" class="nav-link">
+          <span class="nav-text">Componentes</span>
+        </a>
+      </li>      
+
+      <li class="nav-section-title">
+        <span>Personal</span>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_usuarios' %}" class="nav-link">
+          <span class="nav-text">Usuarios</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_personal' %}" class="nav-link">
+          <span class="nav-text">Personal</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_cargos' %}" class="nav-link">
+          <span class="nav-text">Cargos</span>
+        </a>
+      </li>
+
+      <li class="nav-section-title">
+        <span>Movimientos</span>
+      </li>
+      
+      <li class="nav-item">
+        <a href="{% url 'listar_formatos' %}" class="nav-link">
+          <span class="nav-text">Formatos</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'listar_actasalida' %}" class="nav-link">
+          <span class="nav-text">Actas de Salida</span>
+        </a>
+      </li>
+
+      <li class="nav-section-title">
+        <span>Reportes</span>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'historial_equipos' %}" class="nav-link">
+          <span class="nav-text">Historial de Equipos</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'historial_componentes' %}" class="nav-link">
+          <span class="nav-text">Historial de Componentes</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

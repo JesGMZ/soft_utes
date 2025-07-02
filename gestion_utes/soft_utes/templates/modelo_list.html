@@ -1,0 +1,316 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Gestión de Modelos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_deprueba.css' %}">
+<style>
+  #formNuevoModelo {
+    display: none;
+    margin-bottom: 1em;
+  }
+  .pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #e2e8f0;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="form-top">
+    <h1>Modelos</h1>
+  </div>
+
+  <div class="form-row">
+    <button id="btnMostrarFormulario" class="btn-guardar">Nuevo Modelo</button>
+  </div>
+
+  <!-- Formulario -->
+  <div class="card" id="formNuevoModelo">
+    <form method="POST" id="modeloForm" action="{% url 'modelo_create' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" id="idModelo" name="idModelo">
+      <div class="form-row">
+        <label for="idMarca">Marca:</label>
+        <select id="idMarca" name="idMarca" required>
+          <option value="" disabled selected>Seleccione una marca</option>
+          {% for marca in marcas %}
+          <option value="{{ marca.idMarca }}">{{ marca.nombreMarca }}</option>
+          {% endfor %}
+        </select>
+        <label for="nombreModelo">Nombre:</label>
+        <input type="text" id="nombreModelo" name="nombreModelo" required>
+      </div>
+
+      <div class="form-row">
+        <label for="descripcionModelo">Descripción:</label>
+        <input type="text" id="descripcionModelo" name="descripcionModelo">
+        <label for="Imagen">Foto/Imagen:</label>
+        <input type="file" id="Imagen" name="Imagen" accept="image/*">
+      </div>
+
+      <div class="form-row">
+        <button type="submit" class="btn-guardar">Guardar</button>
+        <button type="button" class="btn-cancelar" id="btnCancelarFormulario">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista -->
+  <div class="card-lista">
+    <div class="table-header">
+      <h2>Lista de Modelos</h2>
+      <div style="display: flex; justify-content: space-between; gap: 1rem;">
+        <div>
+          <label>Mostrar</label>
+          <select id="mostrar">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>registros</span>
+        </div>
+        <div>
+          <input type="text" id="buscar" class="search-input" placeholder="🔍 Buscar...">
+        </div>
+      </div>
+    </div>
+
+    <div class="tabla-responsive">
+      <table class="equipos-table" id="tablaModelos">
+        <thead>
+          <tr>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Descripción</th>
+            <th>Imagen</th>
+            <th>Operaciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaCuerpo">
+          {% for modelo in modelos %}
+          <tr>
+            <td>{{ modelo.idMarca.nombreMarca }}</td>
+            <td>{{ modelo.nombreModelo }}</td>
+            <td>{{ modelo.descripcionModelo }}</td>
+            <td>
+              {% if modelo.Imagen %}
+              <img src="{{ modelo.Imagen.url }}" alt="Imagen" style="width: 60px; height: auto;">
+              {% else %}
+              <span class="no-image">Sin imagen</span>
+              {% endif %}
+            </td>
+            <td>
+              <button class="btn amarillo btn-edit"
+                data-id="{{ modelo.idModelo }}"
+                data-nombre="{{ modelo.nombreModelo }}"
+                data-descripcion="{{ modelo.descripcionModelo }}"
+                data-marca="{{ modelo.idMarca.idMarca }}">
+                ✏️ Editar
+              </button>
+              <a href="{% url 'modelo_delete' modelo.idModelo %}" class="btn rojo btn-delete"
+                onclick="return confirm('¿Seguro que deseas eliminar este modelo?');">🗑 Dar de Baja</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="no-data">No hay modelos registrados</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const modelosExistentes = [
+    {% for modelo in modelos %}
+    {
+      id: "{{ modelo.idModelo }}",
+      nombre: "{{ modelo.nombreModelo|lower|escapejs }}",
+      marca: "{{ modelo.idMarca.idMarca }}"
+    },
+    {% endfor %}
+  ];
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btnMostrar = document.getElementById("btnMostrarFormulario");
+  const form = document.getElementById("formNuevoModelo");
+  const btnCancelar = document.getElementById("btnCancelarFormulario");
+  const inputId = document.getElementById("idModelo");
+  const inputNombre = document.getElementById("nombreModelo");
+  const inputDescripcion = document.getElementById("descripcionModelo");
+  const selectMarca = document.getElementById("idMarca");
+  const inputImagen = document.getElementById("Imagen");
+  const modeloForm = document.getElementById("modeloForm");
+  const originalAction = "{% url 'modelo_create' %}";
+
+  btnMostrar.addEventListener("click", () => {
+    form.style.display = "block";
+    btnMostrar.style.display = "none";
+    modeloForm.action = originalAction;
+    inputId.value = '';
+    inputNombre.value = '';
+    inputDescripcion.value = '';
+    selectMarca.selectedIndex = 0;
+    inputImagen.value = '';
+  });
+
+  btnCancelar.addEventListener("click", () => {
+    form.style.display = "none";
+    btnMostrar.style.display = "inline-block";
+    modeloForm.action = originalAction;
+    inputId.value = '';
+    inputNombre.value = '';
+    inputDescripcion.value = '';
+    selectMarca.selectedIndex = 0;
+    inputImagen.value = '';
+  });
+
+  document.querySelectorAll(".btn-edit").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const id = this.getAttribute("data-id");
+      const nombre = this.getAttribute("data-nombre");
+      const descripcion = this.getAttribute("data-descripcion");
+      const marca = this.getAttribute("data-marca");
+
+      inputId.value = id;
+      inputNombre.value = nombre;
+      inputDescripcion.value = descripcion;
+      selectMarca.value = marca;
+      inputImagen.value = '';
+      modeloForm.action = `/modelos/editar/${id}/`;
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+    });
+  });
+
+  modeloForm.addEventListener("submit", function (e) {
+    const nombre = inputNombre.value.trim().toLowerCase();
+    const marca = selectMarca.value;
+    const imagen = inputImagen.files.length;
+    const esEdicion = !!inputId.value;
+
+    const filaActual = Array.from(document.querySelectorAll(".btn-edit")).find(btn => 
+      btn.getAttribute("data-id") === inputId.value
+    );
+
+    const tieneImagenAnterior = filaActual && filaActual.closest("tr").querySelector("img");
+
+    const duplicado = modelosExistentes.some(
+      (modelo) => modelo.nombre === nombre && modelo.marca === marca &&
+                  modelo.id !== inputId.value
+    );
+
+    if (!esEdicion && duplicado) {
+      alert("Ya existe un modelo con ese nombre para la marca seleccionada.");
+      e.preventDefault();
+      return;
+    }
+
+    if (!tieneImagenAnterior && imagen === 0) {
+      alert("Debes seleccionar una imagen para este modelo.");
+      e.preventDefault();
+    }
+  });
+
+  // Paginación y búsqueda
+  const tabla = document.getElementById("tablaCuerpo");
+  const buscar = document.getElementById("buscar");
+  const mostrar = document.getElementById("mostrar");
+  const paginacion = document.getElementById("paginacion");
+  const infoRegistros = document.getElementById("infoRegistros");
+
+  let todasLasFilas = Array.from(tabla.querySelectorAll("tr"));
+  let rows = [...todasLasFilas];
+  let paginaActual = 1;
+  let filasPorPagina = parseInt(mostrar.value);
+
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+    todasLasFilas.forEach(fila => fila.style.display = "none");
+    rows.forEach((fila, i) => {
+      if (i >= inicio && i < fin) fila.style.display = "";
+    });
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+  }
+
+  function actualizarInfo(pagina) {
+    const total = rows.length;
+    const inicio = (pagina - 1) * filasPorPagina + 1;
+    const fin = Math.min(inicio + filasPorPagina - 1, total);
+    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+  }
+
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+    paginacion.innerHTML = "";
+
+    if (pagina > 1) {
+      const prev = document.createElement("button");
+      prev.textContent = "Anterior";
+      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+      paginacion.appendChild(prev);
+    }
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === pagina) btn.classList.add("active");
+      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+      paginacion.appendChild(btn);
+    }
+
+    if (pagina < totalPaginas) {
+      const next = document.createElement("button");
+      next.textContent = "Siguiente";
+      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+      paginacion.appendChild(next);
+    }
+  }
+
+  function aplicarFiltro() {
+    const texto = buscar.value.toLowerCase();
+    rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  buscar.addEventListener("keyup", aplicarFiltro);
+  mostrar.addEventListener("change", () => {
+    filasPorPagina = parseInt(mostrar.value);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+
+  aplicarFiltro();
+});
+</script>
+{% endblock %}

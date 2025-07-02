@@ -1,0 +1,176 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Historial de Componentes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<style>
+  .btn.amarillo {
+    background-color: #ecc94b;
+    color: #1a202c;
+  }
+  .pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #e2e8f0;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Historial de Componentes</h1>
+
+  <div class="card-lista">
+    <div class="table-header">
+      <h2>Reporte actualización de Componentes Informáticos</h2>
+      <button class="btn amarillo" onclick="window.print()">IMPRIMIR 🖨️</button>
+    </div>
+
+    <div class="form-top" style="justify-content: space-between;">
+      <div>
+        <label for="mostrar">Mostrar</label>
+        <select id="mostrar">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+        <span>Registros</span>
+      </div>
+
+      <div>
+        <label for="buscar">Buscar</label>
+        <input type="text" id="buscar" placeholder="🔍" class="search-input">
+      </div>
+    </div>
+
+<div class="tabla-responsive">
+    <table class="equipos-table" id="tablaComponentes">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Nombre</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>N° de Serie</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla">
+        {% for comp in componentes %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ comp.idModelo.nombreModelo }}</td>
+          <td>{{ comp.numeroSerie }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align:center; font-style: italic;">No hay componentes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const tabla = document.getElementById("cuerpoTabla");
+  const buscar = document.getElementById("buscar");
+  const mostrar = document.getElementById("mostrar");
+  const paginacion = document.getElementById("paginacion");
+  const infoRegistros = document.getElementById("infoRegistros");
+
+  let rows = Array.from(tabla.querySelectorAll("tr"));
+  let paginaActual = 1;
+  let filasPorPagina = parseInt(mostrar.value);
+
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+
+    rows.forEach((fila, i) => {
+      fila.style.display = (i >= inicio && i < fin) ? "" : "none";
+    });
+
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+  }
+
+  function actualizarInfo(pagina) {
+    const total = rows.length;
+    const inicio = (pagina - 1) * filasPorPagina + 1;
+    const fin = Math.min(inicio + filasPorPagina - 1, total);
+    infoRegistros.textContent = `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+  }
+
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+    paginacion.innerHTML = "";
+
+    if (pagina > 1) {
+      const prev = document.createElement("button");
+      prev.textContent = "Anterior";
+      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+      paginacion.appendChild(prev);
+    }
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === pagina) btn.classList.add("active");
+      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+      paginacion.appendChild(btn);
+    }
+
+    if (pagina < totalPaginas) {
+      const next = document.createElement("button");
+      next.textContent = "Siguiente";
+      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+      paginacion.appendChild(next);
+    }
+  }
+
+  function aplicarFiltro() {
+    const texto = buscar.value.toLowerCase();
+
+    rows = Array.from(tabla.querySelectorAll("tr")).filter(row => {
+      return row.textContent.toLowerCase().includes(texto);
+    });
+
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  buscar.addEventListener("keyup", aplicarFiltro);
+  mostrar.addEventListener("change", () => {
+    filasPorPagina = parseInt(mostrar.value);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+
+  aplicarFiltro();
+});
+</script>
+{% endblock %}

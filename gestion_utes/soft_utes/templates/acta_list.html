@@ -1,0 +1,744 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Actas de Salida{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<style>
+  #formActa {
+    display: none;
+    margin-bottom: 2em;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .estado {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .activo {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  
+  .inactivo {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  .search-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1.5rem 0;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+  }
+  
+  .search-box input[type="text"] {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.95em;
+    transition: all 0.2s;
+    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E") no-repeat 12px center;
+  }
+  
+  .search-box input[type="text"]:focus {
+    outline: none;
+    border-color: #90cdf4;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  }
+  
+  .records-per-page {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #4a5568;
+  }
+  
+  .records-per-page select {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+  }
+  
+  .pagination {
+    display: flex;
+    gap: 6px;
+    margin: 20px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .pagination button:hover:not(:disabled) {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+  }
+  
+  .pagination button.active {
+    background: #2b6cb0;
+    color: white;
+    border-color: #2b6cb0;
+    font-weight: 600;
+  }
+  
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 30px 20px;
+    color: #718096;
+    font-style: italic;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin: 20px 0;
+  }
+  
+  .info-registros {
+    font-size: 0.9em;
+    color: #4a5568;
+    margin: 15px 0;
+    text-align: right;
+  }
+  
+  .card-lista {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow-x: auto;
+  }
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .equipos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+  
+  .equipos-table th,
+  .equipos-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+  
+  .equipos-table th {
+    background-color: #f7fafc;
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.05em;
+  }
+  
+  .equipos-table tr:hover {
+    background-color: #f8fafc;
+  }
+  
+  .equipos-table td {
+    color: #4a5568;
+  }
+  
+  .btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .btn:active {
+    transform: translateY(0);
+  }
+  
+  .btn.azul { 
+    background-color: #4299e1; 
+    color: white; 
+  }
+  
+  .btn.azul:hover { 
+    background-color: #3182ce;
+  }
+  
+  .btn.amarillo { 
+    background-color: #ecc94b; 
+    color: #1a202c; 
+  }
+  
+  .btn.amarillo:hover { 
+    background-color: #d69e2e;
+  }
+  
+  .btn.morado { 
+    background-color: #9f7aea; 
+    color: white; 
+  }
+  
+  .btn.morado:hover { 
+    background-color: #805ad5;
+  }
+  
+  .btn.rojo { 
+    background-color: #f56565; 
+    color: white; 
+  }
+  
+  .btn.rojo:hover { 
+    background-color: #e53e3e;
+  }
+  
+  .btn-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .card-lista {
+      border: none;
+      box-shadow: none;
+    }
+    
+    .equipos-table th,
+    .equipos-table td {
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .equipos-table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    
+    .search-container {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .search-box {
+      max-width: 100%;
+    }
+    
+    .records-per-page {
+      justify-content: space-between;
+      width: 100%;
+    }
+    
+    .btn-acciones {
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .btn-acciones .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="form-top">
+    <h1>Actas de Salida</h1>
+  </div>
+
+  <div class="form-row">
+    <button id="btnMostrarFormulario" class="btn-guardar">Nueva Acta</button>
+  </div>
+
+  <!-- Formulario dinámico -->
+  <div class="card" id="formActa">
+    <form method="POST" id="actaForm" action="{% url 'crear_actasalida' %}">
+      {% csrf_token %}
+      <input type="hidden" id="idActa" name="idActa">
+
+      <div class="form-row">
+        <label for="codReq">Cod-Req:</label>
+        <input type="text" id="codReq" name="codReq" required>
+
+        <label for="formatoVisible">Formato:</label>
+        <input type="text" id="formatoVisible" value="{{ formatos.codigoFormato }} / {{ formatos.versionFormato }} / {{ formatos.fechaFormato|date:'Y-m-d' }}" disabled>
+        <input type="hidden" id="idFormato" name="idFormato" value="{{ formatos.idFormato }}">
+        <button class="btn azul" title="Ver detalles">
+          <a href="{% url 'listar_formatos' %}" class="no-print">Cambiar</a>
+        </button>
+      </div>
+
+      <div class="form-row">
+        <label for="idEstablecimiento">Establecimiento:</label>
+        <select id="idEstablecimiento" name="idEstablecimiento" required>
+          <option value="">-- Seleccione --</option>
+          {% for est in establecimientos %}
+          <option value="{{ est.idEstablecimiento }}">{{ est.NombreEstablecimiento }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="idPersonal">Personal:</label>
+        <select id="idPersonal" name="idPersonal" required>
+          <option value="">-- Seleccione --</option>
+          {% for per in personal %}
+          <option value="{{ per.idPersonal }}">{{ per.Nombres }} {{ per.Apellidos }}</option>
+          {% endfor %}
+        </select>
+
+      </div>
+
+      <div class="form-row">
+        <button type="submit" class="btn-guardar">Guardar</button>
+        <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla de actas -->
+  <div class="card-lista">
+    <div class="table-header">
+      <h2>Lista de Remisión de Salida</h2>
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" id="buscar" placeholder="Buscar actas..." autocomplete="off">
+        </div>
+        <div class="records-per-page no-print">
+          <span>Mostrar</span>
+          <select id="mostrar">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span>registros</span>
+        </div>
+      </div>
+    </div>
+
+    <table class="equipos-table" id="tablaActas">
+      <thead>
+        <tr>
+          <th>Cod-Req</th>
+          <th>Establecimiento</th>
+          <th>Personal</th>
+          <th>Fecha de Registro</th>
+          <th>Estado</th>
+          <th>Operaciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuerpo">
+        {% for acta in actas %}
+        <tr>
+          <td>{{ acta.codReq }}</td>
+          <td>{{ acta.idEstablecimiento.NombreEstablecimiento }}</td>
+          <td>{{ acta.idPersonal.Nombres }} {{ acta.idPersonal.Apellidos }}</td>
+          <td>{{ acta.fechaRegistro|date:"d/m/Y" }}</td>
+          <td>
+            <span class="estado activo">ACTIVO</span>
+          </td>
+          <td>
+            <div class="btn-acciones">
+              <button class="btn azul" title="Ver detalles">
+                <a href="{% url 'detalle_acta_salida' acta.idActaSalida %}" class="no-print">📄 Ver</a>
+              </button>
+              <button class="btn amarillo"
+                data-id="{{ acta.idActaSalida }}"
+                data-codigo="{{ acta.codReq }}"
+                data-establecimiento="{{ acta.idEstablecimiento.idEstablecimiento }}"
+                data-personal="{{ acta.idPersonal.idPersonal }}"
+                data-formato="{{ acta.idFormato.idFormato }}"
+                title="Editar acta">
+                <span class="no-print">✏️</span> Editar
+              </button>
+              <a href="{% url 'asignar_equipo_acta' acta.idActaSalida %}" class="btn morado">📦 Asignar Equipos</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="no-data">No hay actas registradas</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
+    <div class="pagination" id="paginacion"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let timeoutBusqueda;
+let filasPorPagina = 10;
+let paginaActual = 1;
+let filasFiltradas = [];
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Lógica del formulario
+  const btnMostrar = document.getElementById("btnMostrarFormulario");
+  const btnCancelar = document.getElementById("btnCancelarFormulario");
+  const form = document.getElementById("formActa");
+  const buscar = document.getElementById("buscar");
+  const mostrar = document.getElementById("mostrar");
+  const infoRegistros = document.createElement("div");
+  infoRegistros.className = "info-registros";
+  document.querySelector(".card-lista").insertBefore(infoRegistros, document.getElementById("paginacion"));
+  
+  // Inicializar con las preferencias guardadas
+  const filasGuardadas = localStorage.getItem('filasPorPaginaActas');
+  if (filasGuardadas) {
+    filasPorPagina = parseInt(filasGuardadas);
+    mostrar.value = filasPorPagina;
+  } else {
+    filasPorPagina = 10;
+    mostrar.value = filasPorPagina;
+  }
+  const formElement = document.getElementById("actaForm");
+
+  const inputId = document.getElementById("idActa");
+  const inputCod = document.getElementById("codReq");
+  const selectEstablecimiento = document.getElementById("idEstablecimiento");
+  const selectPersonal = document.getElementById("idPersonal");
+  const selectFormato = document.getElementById("idFormato");
+
+  const originalAction = "{% url 'crear_actasalida' %}";
+
+  // Mostrar formulario para nuevo registro
+  btnMostrar.addEventListener("click", () => {
+    form.style.display = "block";
+    btnMostrar.style.display = "none";
+    formElement.action = originalAction;
+    formElement.reset();
+    inputId.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Cancelar formulario
+  btnCancelar.addEventListener("click", () => {
+    form.style.display = "none";
+    btnMostrar.style.display = "inline-block";
+    formElement.action = originalAction;
+    inputId.value = '';
+    formElement.reset();
+  });
+
+  // Lógica de edición
+  const botonesEditar = document.querySelectorAll(".btn.amarillo");
+  botonesEditar.forEach(btn => {
+    btn.addEventListener("click", function() {
+      const id = this.getAttribute("data-id");
+      const codigo = this.getAttribute("data-codigo");
+      const idEstablecimiento = this.getAttribute("data-establecimiento");
+      const idPersonal = this.getAttribute("data-personal");
+      const idFormato = this.getAttribute("data-formato");
+      
+      inputId.value = id;
+      inputCod.value = codigo;
+      if (selectEstablecimiento) selectEstablecimiento.value = idEstablecimiento;
+      if (selectPersonal) selectPersonal.value = idPersonal;
+      if (selectFormato) selectFormato.value = idFormato;
+      
+      formElement.action = `/actas/editar/${id}/`;
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // Lógica de búsqueda y paginación
+  const tabla = document.getElementById("tablaCuerpo");
+  const filas = Array.from(tabla.getElementsByTagName("tr"));
+  const paginacion = document.getElementById("paginacion");
+  
+  // Remove duplicate declarations since they're already defined in the global scope
+
+  // Función para mostrar una página específica
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+    
+    filasFiltradas.forEach((fila, index) => {
+      if (index >= inicio && index < fin) {
+        fila.style.display = "";
+      } else {
+        fila.style.display = "none";
+      }
+    });
+    
+    // Actualizar la URL sin recargar la página
+    const url = new URL(window.location);
+    url.searchParams.set('pagina', pagina);
+    window.history.pushState({}, '', url);
+    
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+    
+    // Desplazamiento suave a la parte superior de la tabla
+    if (pagina !== 1) {
+      document.querySelector('.card-lista').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Función para actualizar la información de registros mostrados
+  function actualizarInfo(pagina) {
+    const totalFilas = filasFiltradas.length;
+    const inicio = totalFilas > 0 ? (pagina - 1) * filasPorPagina + 1 : 0;
+    const fin = Math.min(inicio + filasPorPagina - 1, totalFilas);
+    
+    if (totalFilas === 0) {
+      infoRegistros.textContent = 'No se encontraron registros';
+    } else if (totalFilas === 1) {
+      infoRegistros.textContent = 'Mostrando 1 de 1 registro';
+    } else if (inicio === fin) {
+      infoRegistros.textContent = `Mostrando registro ${inicio} de ${totalFilas} en total`;
+    } else {
+      infoRegistros.textContent = `Mostrando ${inicio} a ${fin} de ${totalFilas} registros`;
+    }
+  }
+
+  // Función para actualizar los botones de paginación
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(filasFiltradas.length / filasPorPagina) || 1;
+    const paginacion = document.getElementById("paginacion");
+    paginacion.innerHTML = '';
+    
+    if (totalPaginas <= 1) return;
+    
+    // Botón Primera Página
+    const btnPrimera = document.createElement('button');
+    btnPrimera.innerHTML = '&laquo; Primera';
+    btnPrimera.disabled = pagina === 1;
+    btnPrimera.onclick = () => {
+      if (pagina > 1) {
+        paginaActual = 1;
+        mostrarPagina(paginaActual);
+      }
+    };
+    paginacion.appendChild(btnPrimera);
+    
+    // Botón Anterior
+    const btnAnterior = document.createElement('button');
+    btnAnterior.innerHTML = '&lsaquo; Anterior';
+    btnAnterior.disabled = pagina === 1;
+    btnAnterior.onclick = () => {
+      if (pagina > 1) {
+        paginaActual = pagina - 1;
+        mostrarPagina(paginaActual);
+      }
+    };
+    paginacion.appendChild(btnAnterior);
+    
+    // Números de página
+    const maxBotones = 5;
+    let inicioPaginas = Math.max(1, pagina - Math.floor(maxBotones / 2));
+    let finPaginas = Math.min(inicioPaginas + maxBotones - 1, totalPaginas);
+    
+    if (finPaginas - inicioPaginas + 1 < maxBotones) {
+      inicioPaginas = Math.max(1, finPaginas - maxBotones + 1);
+    }
+    
+    if (inicioPaginas > 1) {
+      const ellipsis = document.createElement('span');
+      ellipsis.textContent = '...';
+      ellipsis.style.padding = '0 10px';
+      paginacion.appendChild(ellipsis);
+    }
+    
+    for (let i = inicioPaginas; i <= finPaginas; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = i === pagina ? 'active' : '';
+      btn.onclick = () => {
+        paginaActual = i;
+        mostrarPagina(paginaActual);
+      };
+      paginacion.appendChild(btn);
+    }
+    
+    if (finPaginas < totalPaginas) {
+      const ellipsis = document.createElement('span');
+      ellipsis.textContent = '...';
+      ellipsis.style.padding = '0 10px';
+      paginacion.appendChild(ellipsis);
+    }
+    
+    // Botón Siguiente
+    const btnSiguiente = document.createElement('button');
+    btnSiguiente.innerHTML = 'Siguiente &rsaquo;';
+    btnSiguiente.disabled = pagina === totalPaginas;
+    btnSiguiente.onclick = () => {
+      if (pagina < totalPaginas) {
+        paginaActual = pagina + 1;
+        mostrarPagina(paginaActual);
+      }
+    };
+    paginacion.appendChild(btnSiguiente);
+    
+    // Botón Última Página
+    const btnUltima = document.createElement('button');
+    btnUltima.innerHTML = 'Última &raquo;';
+    btnUltima.disabled = pagina === totalPaginas;
+    btnUltima.onclick = () => {
+      if (pagina < totalPaginas) {
+        paginaActual = totalPaginas;
+        mostrarPagina(paginaActual);
+      }
+    };
+    paginacion.appendChild(btnUltima);
+  }
+
+  // Función para aplicar el filtro de búsqueda con debounce
+  function aplicarFiltro() {
+    clearTimeout(timeoutBusqueda);
+    
+    timeoutBusqueda = setTimeout(() => {
+      const texto = buscar.value.trim().toLowerCase();
+      
+      filasFiltradas = filas.filter(fila => {
+        // Excluir la fila de "no hay registros"
+        if (fila.classList.contains('no-data-row')) return false;
+        
+        const celdas = Array.from(fila.getElementsByTagName('td'));
+        return celdas.some(celda => {
+          // Excluir la columna de botones de la búsqueda
+          if (celda.querySelector('.btn-acciones')) return false;
+          return celda.textContent.toLowerCase().includes(texto);
+        });
+      });
+      
+      // Mostrar mensaje si no hay resultados
+      const cuerpoTabla = document.querySelector('#tablaCuerpo');
+      const filasExistentes = Array.from(cuerpoTabla.getElementsByTagName('tr'));
+      let filaNoData = filasExistentes.find(fila => fila.classList.contains('no-data-row'));
+      
+      if (filasFiltradas.length === 0) {
+        if (!filaNoData) {
+          filaNoData = document.createElement('tr');
+          filaNoData.classList.add('no-data-row');
+          const celda = document.createElement('td');
+          celda.colSpan = 6;
+          celda.className = 'no-data';
+          celda.textContent = 'No se encontraron registros que coincidan con la búsqueda';
+          filaNoData.appendChild(celda);
+          cuerpoTabla.appendChild(filaNoData);
+        }
+      } else if (filaNoData) {
+        cuerpoTabla.removeChild(filaNoData);
+      }
+      
+      // Restaurar página a 1 y mostrar resultados
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    }, 300); // 300ms de retraso para la búsqueda
+  }
+
+  // Inicializar la paginación
+  function inicializarPaginacion() {
+    // Obtener el número de página de la URL si existe
+    const urlParams = new URLSearchParams(window.location.search);
+    const paginaUrl = parseInt(urlParams.get('pagina'));
+    
+    if (paginaUrl && !isNaN(paginaUrl) && paginaUrl > 0) {
+      paginaActual = paginaUrl;
+    }
+    
+    // Aplicar filtro inicial
+    aplicarFiltro();
+  }
+  
+  // Event Listeners
+  buscar.addEventListener('input', aplicarFiltro);
+  
+  mostrar.addEventListener('change', () => {
+    filasPorPagina = parseInt(mostrar.value);
+    // Guardar preferencia en localStorage
+    localStorage.setItem('filasPorPaginaActas', filasPorPagina);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+  
+  // Manejar el botón de limpiar búsqueda
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('.limpiar-busqueda')) {
+      buscar.value = '';
+      aplicarFiltro();
+      buscar.focus();
+    }
+  });
+  
+  // Inicializar la paginación al cargar la página
+  inicializarPaginacion();
+});
+</script>
+{% endblock %}

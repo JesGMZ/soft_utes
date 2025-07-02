@@ -1,0 +1,155 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalle del Equipo</title>
+  <link rel="stylesheet" href="{% static 'detalle_estilos.css' %}">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: white;
+      color: black;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      color: #000;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .card, .card-lista {
+      border: 1px solid #000;
+      padding: 20px;
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+
+    .form-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+
+    .imagen-contenedor {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .imagen-contenedor img {
+      max-width: 150px;
+      border: 1px solid #ccc;
+      padding: 4px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .detalle-columna {
+      flex: 2;
+      min-width: 250px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .form-row label {
+      width: 160px;
+      font-weight: bold;
+    }
+
+    .form-row div {
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    thead {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Equipo Informático</h1>
+  <h2>Datos del Equipo</h2>
+
+  <div class="card form-top">
+    <div class="imagen-contenedor">
+      {% if equipo.idModelo.Imagen %}
+        <img src="{{ equipo.idModelo.Imagen.url }}" alt="Imagen del equipo">
+      {% endif %}
+    </div>
+
+    <div class="detalle-columna">
+      <div class="form-row"><label>N° DE PATRIMONIO:</label><div>{{ equipo.codigoPatrimonial }}</div></div>
+      <div class="form-row"><label>TIPO DE EQUIPO:</label><div>{{ equipo.idTipoEquipo.nombre }}</div></div>
+      <div class="form-row"><label>DESCRIPCIÓN:</label><div>{{ equipo.descripcionEquipo }}</div></div>
+      <div class="form-row"><label>NÚMERO DE SERIE:</label><div>{{ equipo.numeroSerie }}</div></div>
+      <div class="form-row"><label>OBSERVACIÓN:</label><div>{{ equipo.observacionEquipo }}</div></div>
+    </div>
+
+    <div class="detalle-columna">
+      <div class="form-row"><label>MARCA:</label><div>{{ equipo.idModelo.idMarca.nombreMarca }}</div></div>
+      <div class="form-row"><label>MODELO:</label><div>{{ equipo.idModelo.nombreModelo }}</div></div>
+      <div class="form-row"><label>UBICACIÓN:</label><div>{{ equipo.ubicacion|default:'-' }}</div></div>
+      <div class="form-row"><label>Año de Garantía:</label><div>{{ equipo.añoGarantia }} años</div></div>
+      <div class="form-row"><label>Fecha Adquisición:</label><div>{{ equipo.fechaRegistro|date:"d/m/Y" }}</div></div>
+    </div>
+  </div>
+
+  <div class="card-lista">
+    <h2>Componentes del Equipo</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>N° Serie</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in componentes %}
+        <tr>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.numeroSerie }}</td>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ comp.idModelo.nombreModelo }}</td>
+          <td>{{ comp.descripcionComponente }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center;">No hay componentes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

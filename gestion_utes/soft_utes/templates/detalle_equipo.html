@@ -1,0 +1,80 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Detalle del Equipo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'detalle_estilos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Equipo Informático</h1>
+  <h2>Datos del Equipo</h2>
+  
+  <div class="subtitulo-boton">
+    <form method="post" action="">
+      {% csrf_token %}
+      <button class="btn verde" onclick="window.print()">IMPRIMIR</button>
+    </form>
+  </div>
+
+  <div class="card form-top">
+    <div class="imagen-contenedor">
+      {% if equipo.idModelo.Imagen %}
+        <img src="{{ equipo.idModelo.Imagen.url }}" alt="Imagen del equipo" style="max-width: 100%; border: 1px solid #ccc; padding: 4px;">
+      {% else %}
+        <div class="imagen-placeholder">SIN IMAGEN</div>
+      {% endif %}
+    </div>
+
+    <div class="detalle-columna">
+      <div class="form-row"><label>N° DE PATRIMONIO:</label><div>{{ equipo.codigoPatrimonial }}</div></div>
+      <div class="form-row"><label>TIPO DE EQUIPO:</label><div>{{ equipo.idTipoEquipo.nombre }}</div></div>
+      <div class="form-row"><label>DESCRIPCIÓN:</label><div>{{ equipo.descripcionEquipo }}</div></div>
+      <div class="form-row"><label>NÚMERO DE SERIE:</label><div>{{ equipo.numeroSerie }}</div></div>
+      <div class="form-row"><label>OBSERVACIÓN:</label><div>{{ equipo.observacionEquipo }}</div></div>
+    </div>
+
+    <div class="detalle-columna">
+      <div class="form-row"><label>MARCA:</label><div>{{ equipo.idModelo.idMarca.nombreMarca }}</div></div>
+      <div class="form-row"><label>MODELO:</label><div>{{ equipo.idModelo.nombreModelo }}</div></div>
+      <div class="form-row"><label>ESTADO:</label><div>{{ equipo.estado|default:'-' }}</div></div>
+      <div class="form-row"><label>Año de Garantía:</label><div>{{ equipo.añoGarantia }} años</div></div>
+      <div class="form-row"><label>Fecha Adquisición:</label><div>{{ equipo.fechaRegistro|date:"d/m/Y" }}</div></div>
+    </div>
+  </div>
+
+  <div class="card-lista">
+    <h2>Componentes del Equipo</h2>
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>N° Serie</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in componentes %}
+        <tr>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.numeroSerie }}</td>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ comp.idModelo.nombreModelo }}</td>
+          <td>{{ comp.descripcionComponente }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center;">No hay componentes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

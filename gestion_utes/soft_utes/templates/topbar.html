@@ -2,53 +2,53 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistema OGI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="{% static 'topb.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'topb.css' %}" />
 </head>
 <body>
-  <!-- Topbar Corporativo - Versión CSS puro -->
-    <header class="topbar">
+  <!-- Topbar Corporativo -->
+  <header class="topbar">
     <!-- Contenedor izquierdo (logo y título) -->
-      <div class="topbar-brand-container">
-          <img src="{% static 'icons/logo.jpeg' %}" alt="Logo" class="topbar-logo">
-          <div class="topbar-texts">
-              <span class="topbar-title">Sistema OGI</span>
-              <span class="topbar-subtitle">Inventario de Almacén</span>
-          </div>
+    <div class="topbar-brand-container">
+      <img src="{% static 'icons/logo_utes.jpg' %}" alt="Logo" class="topbar-logo" />
+      <div class="topbar-texts">
+        <span class="topbar-title">Sistema OGI</span>
+        <span class="topbar-subtitle">Inventario de Almacén</span>
       </div>
+    </div>
 
-    
-    <!-- Toggler para móvil -->
-    <button class="topbar-toggler" id="mobileToggler">
-        <i class="fas fa-bars"></i>
+    <!-- Toggler solo del TOPBAR (usuario) -->
+    <button class="topbar-toggler" id="topbarToggler" aria-label="Menú Usuario">
+      <i class="fas fa-user-circle"></i>
     </button>
-    
-    <!-- Contenedor derecho (elementos de usuario) -->
-    <div class="topbar-user-container" id="userContainer">
-        <div class="user-info">
+
+    <!-- Contenedor derecho (usuario) -->
+    <div class="topbar-user-container" id="topbarMenu">
+      <div class="user-info">
         <span class="user-name">Usuario</span>
         <span class="user-role">Administrador</span>
-        </div>
-        
-        <div class="user-dropdown">
+      </div>
+      
+      <div class="user-dropdown">
         <button class="user-avatar" id="userDropdown">
-            <i class="fas fa-user-circle"></i>
+          <i class="fas fa-chevron-down"></i>
         </button>
         <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i>Perfil</a></li>
-            <li class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i>Cerrar sesión</a></li>
+          <li class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{% url 'logout' %}">
+              <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </a>
+          </li>
         </ul>
-        </div>
+      </div>
     </div>
-    </header>
+  </header>
 
-  <!-- Resto de tu contenido aquí -->
-  
   <script src="{% static 'topbar.js' %}"></script>
 </body>
 </html>

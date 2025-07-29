@@ -1,10 +1,11 @@
 {% extends base_template %}
 {% load static %}
 
-{% block title %}Gestión de SubÁreas{% endblock %}
+{% block title %}Gestión de Subáreas{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<link rel="stylesheet" href="{% static 'extras.css' %}">
 <style>
   #formSubarea {
     display: none;
@@ -32,14 +33,13 @@
 
 {% block content %}
 <div class="container">
+  <h1>Subáreas</h1>
 
-  <div class="form-top">
-    <h1>Sub-Áreas</h1>
+  <div class="form-row">
+    <button id="btnMostrarFormulario" class="btn-guardar">Nueva Subárea</button>
   </div>
 
-  <button id="btnMostrarFormulario" class="btn-guardar">Nueva SubÁrea</button>
-
-  <div class="card" id="formSubarea">
+  <div id="formSubarea" class="card">
     <form method="POST" id="subareaForm" action="{% url 'crear_subarea' %}">
       {% csrf_token %}
       <input type="hidden" id="idSubarea" name="idSubarea">
@@ -54,16 +54,17 @@
 
         <label for="subarea">Nombre Sub-Área:</label>
         <input type="text" id="subarea" name="nombre" required>
-
-        <button type="submit" class="btn-guardar">Guardar</button>
+      </div>
+      <div class="form-actions">
         <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
+        <button type="submit" class="btn-guardar">Guardar</button>
       </div>
     </form>
   </div>
 
   <div class="card-lista">
     <div class="table-header">
-      <h2>Lista de Sub-Áreas</h2>
+      <h2>Lista de Subáreas</h2>
       <div style="display: flex; justify-content: space-between; gap: 1rem;">
         <div>
           <label>Mostrar</label>
@@ -74,8 +75,13 @@
           </select>
           <span>registros</span>
         </div>
-        <div style="position: relative;">
-          <input type="text" id="buscarSubareas" class="search-input" placeholder="🔍 Buscar..." style="padding-left: 10px;">
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="buscarSubareas" class="search-input" placeholder="🔍 Buscar...">
+          <select id="filtroEstado" class="select-row">
+            <option value="">Todos</option>
+            <option value="activo">ACTIVO</option>
+            <option value="inactivo">INACTIVO</option>
+          </select>
         </div>
       </div>
     </div>
@@ -94,20 +100,28 @@
         <tr>
           <td>{{ sub.idArea.areaNombre }}</td>
           <td>{{ sub.subareaNombre }}</td>
-          <td><span class="estado activo">Activo</span></td>
           <td>
-            <button class="btn amarillo btn-editar"
-                    data-id="{{ sub.idSubarea }}"
-                    data-nombre="{{ sub.subareaNombre }}"
-                    data-area="{{ sub.idArea.idArea }}">
-              ✏️ Editar
-            </button>
-            <a href="{% url 'eliminar_subarea' sub.idSubarea %}" class="btn rojo">🗑 Dar de Baja</a>
+            <span class="estado {% if sub.estado == 'ACTIVO' %}activo{% else %}inactivo{% endif %}">
+              {{ sub.estado }}
+            </span>
+          </td>
+          <td>
+            {% if sub.estado == 'ACTIVO' %}
+              <button class="btn amarillo btn-editar"
+                      data-id="{{ sub.idSubarea }}"
+                      data-nombre="{{ sub.subareaNombre }}"
+                      data-area="{{ sub.idArea.idArea }}">
+                ✏️ Editar
+              </button>
+              <a href="{% url 'eliminar_subarea' sub.idSubarea %}" class="btn rojo">🗑 Dar de Baja</a>
+            {% else %}
+              <a href="{% url 'subarea_reactivar' sub.idSubarea %}" class="btn morado">✅ Reactivar</a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5">No hay subáreas registradas.</td>
+          <td colspan="4" class="no-data">No hay subáreas registradas</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -121,116 +135,7 @@
 
 {% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const btnMostrar = document.getElementById("btnMostrarFormulario");
-    const btnCancelar = document.getElementById("btnCancelarFormulario");
-    const form = document.getElementById("formSubarea");
-    const formElement = document.getElementById("subareaForm");
-    const inputId = document.getElementById("idSubarea");
-    const inputNombre = document.getElementById("subarea");
-    const selectArea = document.getElementById("area");
-    const originalAction = "{% url 'crear_subarea' %}";
-
-    btnMostrar.addEventListener("click", () => {
-      form.style.display = "block";
-      btnMostrar.style.display = "none";
-      formElement.action = originalAction;
-      formElement.reset();
-      inputId.value = '';
-    });
-
-    btnCancelar.addEventListener("click", () => {
-      form.style.display = "none";
-      btnMostrar.style.display = "inline-block";
-      formElement.action = originalAction;
-      formElement.reset();
-      inputId.value = '';
-    });
-
-    const botonesEditar = document.querySelectorAll(".btn-editar");
-    botonesEditar.forEach((btn) => {
-      btn.addEventListener("click", function () {
-        inputId.value = this.getAttribute("data-id");
-        inputNombre.value = this.getAttribute("data-nombre");
-        selectArea.value = this.getAttribute("data-area");
-
-        formElement.action = `/subareas/editar/${inputId.value}/`;
-        form.style.display = "block";
-        btnMostrar.style.display = "none";
-      });
-    });
-
-    const tabla = document.getElementById("tablaSubareas");
-    const buscar = document.getElementById("buscarSubareas");
-    const mostrar = document.getElementById("mostrar");
-    const paginacion = document.getElementById("paginacion");
-    const infoRegistros = document.getElementById("infoRegistros");
-
-    let todasLasFilas = Array.from(tabla.querySelectorAll("tr"));
-    let rows = [...todasLasFilas];
-    let paginaActual = 1;
-    let filasPorPagina = parseInt(mostrar.value);
-
-    function mostrarPagina(pagina) {
-      const inicio = (pagina - 1) * filasPorPagina;
-      const fin = inicio + filasPorPagina;
-      todasLasFilas.forEach(fila => fila.style.display = "none");
-      rows.forEach((fila, i) => {
-        if (i >= inicio && i < fin) fila.style.display = "";
-      });
-      actualizarInfo(pagina);
-      actualizarPaginacion(pagina);
-    }
-
-    function actualizarInfo(pagina) {
-      const total = rows.length;
-      const inicio = (pagina - 1) * filasPorPagina + 1;
-      const fin = Math.min(inicio + filasPorPagina - 1, total);
-      infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
-    }
-
-    function actualizarPaginacion(pagina) {
-      const totalPaginas = Math.ceil(rows.length / filasPorPagina);
-      paginacion.innerHTML = "";
-
-      if (pagina > 1) {
-        const prev = document.createElement("button");
-        prev.textContent = "Anterior";
-        prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
-        paginacion.appendChild(prev);
-      }
-
-      for (let i = 1; i <= totalPaginas; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        if (i === pagina) btn.classList.add("active");
-        btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
-        paginacion.appendChild(btn);
-      }
-
-      if (pagina < totalPaginas) {
-        const next = document.createElement("button");
-        next.textContent = "Siguiente";
-        next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
-        paginacion.appendChild(next);
-      }
-    }
-
-    function aplicarFiltro() {
-      const texto = buscar.value.toLowerCase();
-      rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
-      paginaActual = 1;
-      mostrarPagina(paginaActual);
-    }
-
-    buscar.addEventListener("keyup", aplicarFiltro);
-    mostrar.addEventListener("change", () => {
-      filasPorPagina = parseInt(mostrar.value);
-      paginaActual = 1;
-      mostrarPagina(paginaActual);
-    });
-
-    aplicarFiltro();
-  });
+  const SUBAREA_CREATE_URL = "{% url 'crear_subarea' %}";
 </script>
+<script src="{% static 'js/gestor_subarea.js' %}"></script>
 {% endblock %}

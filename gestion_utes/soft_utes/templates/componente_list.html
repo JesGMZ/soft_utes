@@ -5,10 +5,14 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
+<link rel="stylesheet" href="{% static 'extras.css' %}">
 <style>
-  #registroComponente {
-    display: none;
-  }
+  #registroComponente { display: none; }
+  .btn.amarillo { background-color: #ecc94b; color: #1a202c; }
+  .radio-row { align-items: center; }
+  .radio-label { width: auto; margin-right: 15px; font-weight: 600; }
+  .radio-group { display: flex; gap: 20px; align-items: center; }
+
   .pagination {
     display: flex;
     gap: 8px;
@@ -34,6 +38,18 @@
     border: 1px solid #ccc;
     background-color: #fff;
   }
+
+  .componente-form {
+    border: 1px solid #cbd5e0;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 6px;
+    background-color: #f7fafc;
+  }
+
+  .componente-form h3 {
+    margin-bottom: 10px;
+  }
 </style>
 {% endblock %}
 
@@ -41,68 +57,72 @@
 <div class="container">
   <h1>Componentes</h1>
 
-  <div class="form-row">
-    <button id="btnNuevoComponente" class="btn-guardar">Nuevo Componente</button>
+  <!-- 🧱 Lote de componentes -->
+  <div class="card">
+    <h2>Registrar Lote de Componentes</h2>
+    <div class="form-row" style="flex-wrap: wrap;">
+      <label for="idTipoComponente">Tipo:</label>
+      <select id="idTipoComponente" name="idTipoComponente" required onchange="loadCharacteristics()">
+        <option value="">Seleccione un tipo</option>
+        {% for tipo in tipos %}
+        <option value="{{ tipo.idTipoComponente }}">{{ tipo.nombre }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="modeloInput">Modelo:</label>
+      <input type="text" id="modeloInput" list="listaModelos" autocomplete="off" oninput="actualizarMarca(); actualizarImagenModelo();" required>
+      <input type="hidden" id="modelo" name="idModelo">
+      <datalist id="listaModelos">
+        {% for modelo in modelos %}
+        <option value="{{ modelo.nombreModelo }}"
+                data-id="{{ modelo.idModelo }}"
+                data-marca="{{ modelo.idMarca.nombreMarca }}"
+                data-imagen="{% if modelo.Imagen %}{{ modelo.Imagen.url }}{% endif %}">
+        </option>
+        {% endfor %}
+      </datalist>
+
+      <label for="nombreMarca">Marca:</label>
+      <input type="text" id="nombreMarca" readonly placeholder="Se llenará automáticamente">
+
+      <label for="fechaAdquisicion">Fecha de Adquisición:</label>
+      <input type="date" id="fechaAdquisicion" name="fechaAdquisicion" required>
+
+      <label for="cantidadLote">Cantidad:</label>
+      <input type="number" id="cantidadLote" min="1" value="1" required>
+
+      <button type="button" id="generarLoteBtn" class="btn-guardar">Generar Lote</button>
+      <button type="button" id="btnGuardarTodosComponentes" class="btn-guardar" style="background-color: #38a169;">Guardar Todos</button>
+    </div>
+
+    <div class="form-row" id="grupoImagenModelo" style="display: none; align-items: center; gap: 10px;">
+      <label>Imagen actual:</label>
+      <img id="imagenActualModelo" src="" alt="Imagen del Modelo" style="max-width: 120px; border: 1px solid #ccc; padding: 4px;">
+    </div>
   </div>
 
+  <!-- Campos comunes de características -->
+  <div class="card">
+    <h3>Características Comunes del Lote</h3>
+    <div id="characteristicsContainer">
+      <p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>
+    </div>
+  </div>
+
+  <!-- Contenedor donde se generan los formularios de componentes -->
+  <div id="contenedorComponentesLote" style="margin-top: 20px; display: none;"></div>
+
+  <!-- Formulario individual oculto -->
   <form method="POST" action="{% url 'componente_create' %}" enctype="multipart/form-data" id="componenteForm">
     {% csrf_token %}
     <input type="hidden" id="componenteId" name="componenteId">
     <div id="registroComponente">
-      <div class="form-top">
-        <div class="form-group">
-          <label for="idTipoComponente">Tipo de Componente:</label>
-          <select id="idTipoComponente" name="idTipoComponente" required onchange="loadCharacteristics()">
-            <option value="">Seleccione un tipo</option>
-            {% for tipo in tipos %}
-            <option value="{{ tipo.idTipoComponente }}">{{ tipo.nombre }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <button type="button" id="btnCancelarComponente" class="btn-cancelar">Cancelar Componente</button>
-        <button type="submit" class="btn-guardar">Registrar Componente</button>
-      </div>
-
-      <div class="card">
-        <div class="form-row">
-          <label for="numeroSerie">Nº de Serie:</label>
-          <input type="text" id="numeroSerie" name="numeroSerie">
-
-            <label for="modeloInput">Modelo:</label>
-            <input type="text" id="modeloInput" list="listaModelos" autocomplete="off" oninput="actualizarMarca(); actualizarImagenModelo();" required>
-            <input type="hidden" id="modelo" name="idModelo">
-            <datalist id="listaModelos">
-            {% for modelo in modelos %}
-                <option value="{{ modelo.nombreModelo }}"
-                        data-id="{{ modelo.idModelo }}"
-                        data-marca="{{ modelo.idMarca.nombreMarca }}"
-                        data-imagen="{% if modelo.Imagen %}{{ modelo.Imagen.url }}{% endif %}">
-                </option>
-            {% endfor %}
-            </datalist>
-
-          <label for="nombreMarca">Marca:</label>
-          <input type="text" id="nombreMarca" name="nombreMarca" readonly placeholder="Se llenará automáticamente">
-        </div>
-
-        <div class="form-row" id="grupoImagenModelo" style="display: none; align-items: center; gap: 10px; display: flex;">
-          <label>Imagen actual:</label>
-          <img id="imagenActualModelo" src="" alt="Imagen del Modelo" style="max-width: 120px; margin-bottom: -40px; border: 1px solid #ccc; padding: 4px;">
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Características del Componente</h3>
-        <div id="characteristicsContainer">
-          <p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>
-        </div>
-      </div>
+      <!-- Aquí va el formulario clásico si deseas conservarlo -->
     </div>
   </form>
 
-  <!-- Tabla con búsqueda y paginación -->
-  <div class="card-lista">
+  <!-- Tabla de componentes -->
+  <div class="card-lista" style="margin-top: 20px;">
     <div class="table-header">
       <h2>Componentes Registrados</h2>
       <div style="display: flex; justify-content: space-between; gap: 1rem;">
@@ -116,56 +136,64 @@
           <span>registros</span>
         </div>
         <div>
-        <input type="text" id="buscarComponente" class="search-input" placeholder="🔍 Buscar...">
-        <select id="filtroEstadoComponente" class="select-row">
+          <input type="text" id="buscarComponente" class="search-input" placeholder="🔍 Buscar...">
+          <select id="filtroEstadoComponente" class="select-row">
             <option value="">Todos</option>
             <option value="activo">ACTIVO</option>
             <option value="inactivo">INACTIVO</option>
-        </select>
+          </select>
         </div>
       </div>
     </div>
 
- <div class="tabla-responsive">
-    <table class="equipos-table" id="tablaComponentes">
-      <thead>
-        <tr>
-          <th>Tipo</th>
-          <th>Marca</th>
-          <th>Modelo</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpoTablaComponentes">
-        {% for comp in componentes %}
-        <tr>
-          <td>{{ comp.idTipoComponente.nombre }}</td>
-          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
-          <td>{{ comp.idModelo.nombreModelo }}</td>
-          <td><span class="estado {% if comp.estado == 'ACTIVO' %}activo{% else %}inactivo{% endif %}">{{ comp.estado }}</span></td>
-          <td>
-            <a href="{% url 'componente_detalle' comp.idComponente %}" class="btn azul">Ver</a>
-            <button class="btn amarillo btn-editar"
-                    data-id="{{ comp.idComponente }}"
-                    data-tipo="{{ comp.idTipoComponente.idTipoComponente }}"
-                    data-serie="{{ comp.numeroSerie }}"
-                    data-modelo="{{ comp.idModelo.idModelo }}"
-                    data-marca="{{ comp.idModelo.idMarca.nombreMarca }}"
-                    data-caracteristicas='{{ comp.caracteristicas_json|safe }}'>
-              ✏️ Editar
-            </button>
-            <a href="{% url 'componente_delete' comp.idComponente %}" class="btn rojo" onclick="return confirm('¿Está seguro de eliminar este componente?')">Dar de Baja</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" style="text-align:center; font-style: italic; color: #888;">No hay componentes registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
- </div>
+    <div class="tabla-responsive">
+      <table class="equipos-table" id="tablaComponentes">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>NumeroSerie</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTablaComponentes">
+          {% for comp in componentes %}
+          <tr>
+            <td>{{ comp.idTipoComponente.nombre }}</td>
+            <td>{{ comp.numeroSerie }}</td>
+            <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+            <td>{{ comp.idModelo.nombreModelo }}</td>
+            <td><span class="estado {% if comp.estado == 'ACTIVO' %}activo{% else %}inactivo{% endif %}">{{ comp.estado }}</span></td>
+            <td>
+              {% if comp.estado == "ACTIVO" or comp.estado == "ASIGNADO" %}
+                <a href="{% url 'componente_detalle' comp.idComponente %}" class="btn azul">Ver</a>
+                <button class="btn amarillo btn-editar"
+                        data-id="{{ comp.idComponente }}"
+                        data-tipo="{{ comp.idTipoComponente.idTipoComponente }}"
+                        data-serie="{{ comp.numeroSerie }}"
+                        data-modelo="{{ comp.idModelo.idModelo }}"
+                        data-marca="{{ comp.idModelo.idMarca.nombreMarca }}"
+                        data-caracteristicas='{{ comp.caracteristicas_json|safe }}'>
+                  ✏️ Editar
+                </button>
+                <a href="{% url 'componente_delete' comp.idComponente %}" class="btn rojo" onclick="return confirm('¿Está seguro de eliminar este componente?')">Dar de Baja</a>
+              {% else %}
+                <a href="{% url 'componente_reactivar' comp.idComponente %}" class="btn morado" onclick="return confirm('¿Deseas reactivar este componente?');">✅ Reactivar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center; font-style: italic; color: #888;">No hay componentes registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+
     <p id="infoRegistrosComponentes" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
     <div class="pagination" id="paginacionComponentes"></div>
   </div>
@@ -174,251 +202,231 @@
 
 {% block extra_js %}
 <script>
-function actualizarMarca() {
-  const modeloInput = document.getElementById('modeloInput');
-  const datalist = document.getElementById('listaModelos');
-  const marcaInput = document.getElementById('nombreMarca');
-  const modeloHidden = document.getElementById('modelo');
+  const URL_CREAR_COMPONENTE = "{% url 'componente_create' %}";
+  const URL_LISTA_COMPONENTES = "{% url 'componente_list' %}";
 
-  const selectedOption = Array.from(datalist.options).find(opt => opt.value === modeloInput.value);
+  function actualizarMarca() {
+    const modeloInput = document.getElementById('modeloInput');
+    const datalist = document.getElementById('listaModelos');
+    const marcaInput = document.getElementById('nombreMarca');
+    const modeloHidden = document.getElementById('modelo');
 
-  if (selectedOption) {
-    const marca = selectedOption.getAttribute('data-marca');
-    const idModelo = selectedOption.getAttribute('data-id');
-    marcaInput.value = marca || '';
-    modeloHidden.value = idModelo || '';
-  } else {
-    marcaInput.value = '';
-    modeloHidden.value = '';
-  }
-}
-
-
-function actualizarImagenModelo() {
-  const modeloInput = document.getElementById('modeloInput');
-  const datalist = document.getElementById('listaModelos');
-  const selectedOption = Array.from(datalist.options).find(opt => opt.value === modeloInput.value);
-
-  const imgElemento = document.getElementById('imagenActualModelo');
-  const grupoImagen = document.getElementById('grupoImagenModelo');
-
-  if (selectedOption) {
-    const imagenUrl = selectedOption.getAttribute('data-imagen');
-    if (imagenUrl) {
-      imgElemento.src = imagenUrl;
-      grupoImagen.style.display = "flex";
+    const selectedOption = Array.from(datalist.options).find(opt => opt.value === modeloInput.value);
+    if (selectedOption) {
+      marcaInput.value = selectedOption.getAttribute('data-marca') || '';
+      modeloHidden.value = selectedOption.getAttribute('data-id') || '';
     } else {
-      imgElemento.src = "";
-      grupoImagen.style.display = "none";
-    }
-  } else {
-    imgElemento.src = "";
-    grupoImagen.style.display = "none";
-  }
-}
-
-
-function loadCharacteristics(callback = null) {
-  const tipoComponenteId = document.getElementById('idTipoComponente').value;
-  const container = document.getElementById('characteristicsContainer');
-
-  if (!tipoComponenteId) {
-    container.innerHTML = '<p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>';
-    return;
-  }
-
-  fetch(`/api/caracteristicas-por-tipo/${tipoComponenteId}/`)
-    .then(response => response.json())
-    .then(data => {
-      let html = '';
-      data.forEach(caracteristica => {
-        html += `
-          <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 9px;">
-            <label for="caracteristica_${caracteristica.idCaracteristica}" style="min-width: 200px; font-weight: bold;">
-              ${caracteristica.descripcionCaracteristica}:
-            </label>
-            <input type="text"
-                  id="caracteristica_${caracteristica.idCaracteristica}"
-                  name="caracteristica_${caracteristica.idCaracteristica}"
-                  ${caracteristica.requerido ? 'required' : ''}
-                  style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;">
-          </div>`;
-      });
-      container.innerHTML = html;
-      if (callback) callback();
-    });
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const btnNuevo = document.getElementById("btnNuevoComponente");
-  const btnCancelar = document.getElementById("btnCancelarComponente");
-  const formWrapper = document.getElementById("registroComponente");
-  const formElement = document.getElementById("componenteForm");
-  const originalAction = "{% url 'componente_create' %}";
-
-  const inputId = document.getElementById("componenteId");
-  const tipoSelect = document.getElementById("idTipoComponente");
-  const modeloHidden = document.getElementById("modelo");
-  const modeloInput = document.getElementById("modeloInput");
-  const serieInput = document.getElementById("numeroSerie");
-  const marcaInput = document.getElementById("nombreMarca");
-
-
-  btnNuevo.addEventListener("click", () => {
-    formWrapper.style.display = "block";
-    btnNuevo.style.display = "none";
-    formElement.action = originalAction;
-    inputId.value = '';
-    formElement.reset();
-    setTimeout(() => {
-      actualizarMarca();
-      actualizarImagenModelo();
-    }, 100);
-    document.getElementById("characteristicsContainer").innerHTML =
-      `<p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>`;
-  });
-
-  btnCancelar.addEventListener("click", () => {
-    formWrapper.style.display = "none";
-    btnNuevo.style.display = "inline-block";
-    formElement.action = originalAction;
-    inputId.value = '';
-    formElement.reset();
-  });
-
-  const botonesEditar = document.querySelectorAll(".btn-editar");
-  botonesEditar.forEach(btn => {
-    btn.addEventListener("click", function () {
-      const id = this.dataset.id;
-      const tipo = this.dataset.tipo;
-      const serie = this.dataset.serie;
-      const modelo = this.dataset.modelo;
-      const marca = this.dataset.marca;
-      const caracteristicas = JSON.parse(this.dataset.caracteristicas);
-
-      inputId.value = id;
-      tipoSelect.value = tipo;
-      modeloHidden.value = modelo;
-        const modeloOption = Array.from(document.getElementById("listaModelos").options)
-        .find(opt => opt.dataset.id === modelo);
-        if (modeloOption) modeloInput.value = modeloOption.value;
-      serieInput.value = serie;
-      marcaInput.value = marca;
-
-      formElement.action = `/componentes/editar/${id}/`;
-      formWrapper.style.display = "block";
-      btnNuevo.style.display = "none";
-
-      actualizarMarca();
-      actualizarImagenModelo();
-
-      loadCharacteristics(() => {
-        for (const key in caracteristicas) {
-          const input = document.getElementById(key);
-          if (input) input.value = caracteristicas[key];
-        }
-      });
-    });
-  });
-
-  // Busqueda y paginación
-  const tablaComp = document.getElementById("cuerpoTablaComponentes");
-  const buscarComp = document.getElementById("buscarComponente");
-  const mostrarComp = document.getElementById("mostrarComponentes");
-  const paginacionComp = document.getElementById("paginacionComponentes");
-  const infoComp = document.getElementById("infoRegistrosComponentes");
-
-  let todasFilas = Array.from(tablaComp.querySelectorAll("tr"));
-  let filasFiltradas = [...todasFilas];
-  let pagina = 1;
-  let porPagina = parseInt(mostrarComp.value);
-
-  function mostrarPaginaComp(p) {
-    const start = (p - 1) * porPagina;
-    const end = start + porPagina;
-    todasFilas.forEach(fila => fila.style.display = "none");
-    filasFiltradas.forEach((fila, i) => {
-      if (i >= start && i < end) fila.style.display = "";
-    });
-    actualizarInfoComp(p);
-    actualizarPaginacionComp(p);
-  }
-
-  function actualizarInfoComp(p) {
-    const total = filasFiltradas.length;
-    const inicio = (p - 1) * porPagina + 1;
-    const fin = Math.min(inicio + porPagina - 1, total);
-    infoComp.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
-  }
-
-  function actualizarPaginacionComp(p) {
-    const totalPaginas = Math.ceil(filasFiltradas.length / porPagina);
-    paginacionComp.innerHTML = "";
-
-    if (p > 1) {
-      const btnAnt = document.createElement("button");
-      btnAnt.textContent = "Anterior";
-      btnAnt.onclick = () => { pagina--; mostrarPaginaComp(pagina); };
-      paginacionComp.appendChild(btnAnt);
-    }
-
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === p) btn.classList.add("active");
-      btn.onclick = () => { pagina = i; mostrarPaginaComp(i); };
-      paginacionComp.appendChild(btn);
-    }
-
-    if (p < totalPaginas) {
-      const btnSig = document.createElement("button");
-      btnSig.textContent = "Siguiente";
-      btnSig.onclick = () => { pagina++; mostrarPaginaComp(pagina); };
-      paginacionComp.appendChild(btnSig);
+      marcaInput.value = '';
+      modeloHidden.value = '';
     }
   }
 
-    function filtrarComponentes() {
-    const term = buscarComp.value.toLowerCase();
-    const estadoSeleccionado = document.getElementById("filtroEstadoComponente").value;
-    filasFiltradas = todasFilas.filter(row => {
-        const contenido = row.textContent.toLowerCase();
-        const coincideTexto = contenido.includes(term);
+  function actualizarImagenModelo() {
+    const modeloInput = document.getElementById('modeloInput');
+    const datalist = document.getElementById('listaModelos');
+    const selectedOption = Array.from(datalist.options).find(opt => opt.value === modeloInput.value);
+    const img = document.getElementById('imagenActualModelo');
+    const grupo = document.getElementById('grupoImagenModelo');
 
-        if (!estadoSeleccionado) return coincideTexto;
-
-        const estado = row.querySelector("td:nth-child(4)").innerText.toLowerCase();
-        return coincideTexto && estado === estadoSeleccionado;
-    });
-
-    pagina = 1;
-    mostrarPaginaComp(pagina);
+    if (selectedOption && selectedOption.getAttribute('data-imagen')) {
+      img.src = selectedOption.getAttribute('data-imagen');
+      grupo.style.display = "flex";
+    } else {
+      img.src = "";
+      grupo.style.display = "none";
     }
-  buscarComp.addEventListener("keyup", filtrarComponentes);
-  mostrarComp.addEventListener("change", () => {
-    porPagina = parseInt(mostrarComp.value);
-    pagina = 1;
-    mostrarPaginaComp(pagina);
-  });
+  }
 
-  filtrarComponentes();
-  document.getElementById("filtroEstadoComponente").addEventListener("change", filtrarComponentes);
+  function loadCharacteristics(callback = null) {
+    const tipoId = document.getElementById('idTipoComponente').value;
+    const container = document.getElementById('characteristicsContainer');
 
-
-    formElement.addEventListener("submit", function (e) {
-    const modeloInputValue = modeloInput.value.trim();
-    const optionMatch = Array.from(document.getElementById("listaModelos").options)
-      .find(opt => opt.value === modeloInputValue);
-
-    if (!optionMatch) {
-      e.preventDefault();
-      alert("Debe seleccionar un modelo válido de la lista.");
+    if (!tipoId) {
+      container.innerHTML = '<p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>';
       return;
     }
 
-    modeloHidden.value = optionMatch.getAttribute("data-id"); // asegura el ID correcto
+    fetch(`/api/caracteristicas-por-tipo/${tipoId}/`)
+      .then(response => response.json())
+      .then(data => {
+        let html = '';
+        data.forEach(car => {
+          html += `
+            <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 9px;">
+              <label for="caracteristica_${car.idCaracteristica}" style="min-width: 200px; font-weight: bold;">
+                ${car.descripcionCaracteristica}:
+              </label>
+              <input type="text"
+                     id="caracteristica_${car.idCaracteristica}"
+                     name="caracteristica_${car.idCaracteristica}"
+                     ${car.requerido ? 'required' : ''}
+                     style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>`;
+        });
+        container.innerHTML = html;
+        if (callback) callback();
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("componenteForm");
+    const wrapper = document.getElementById("registroComponente");
+    const btnNuevo = document.getElementById("btnNuevoComponente");
+    const btnCancelar = document.getElementById("btnCancelarComponente");
+
+    const inputId = document.getElementById("componenteId");
+    const tipoSelect = document.getElementById("idTipoComponente");
+    const modeloHidden = document.getElementById("modelo");
+    const modeloInput = document.getElementById("modeloInput");
+    const serieInput = document.getElementById("numeroSerie");
+    const marcaInput = document.getElementById("nombreMarca");
+
+    btnNuevo?.addEventListener("click", () => {
+      wrapper.style.display = "block";
+      btnNuevo.style.display = "none";
+      form.action = URL_CREAR_COMPONENTE;
+      inputId.value = '';
+      form.reset();
+      setTimeout(() => {
+        actualizarMarca();
+        actualizarImagenModelo();
+      }, 100);
+      document.getElementById("characteristicsContainer").innerHTML =
+        `<p class="no-characteristics">Seleccione un tipo de componente para ver sus características</p>`;
+    });
+
+    btnCancelar?.addEventListener("click", () => {
+      wrapper.style.display = "none";
+      btnNuevo.style.display = "inline-block";
+      form.action = URL_CREAR_COMPONENTE;
+      inputId.value = '';
+      form.reset();
+    });
+
+    document.querySelectorAll(".btn-editar").forEach(btn => {
+      btn.addEventListener("click", function () {
+        const id = this.dataset.id;
+        const tipo = this.dataset.tipo;
+        const serie = this.dataset.serie;
+        const modelo = this.dataset.modelo;
+        const marca = this.dataset.marca;
+        const caracteristicas = JSON.parse(this.dataset.caracteristicas);
+
+        inputId.value = id;
+        tipoSelect.value = tipo;
+        modeloHidden.value = modelo;
+        const modeloOpt = Array.from(document.getElementById("listaModelos").options)
+          .find(opt => opt.dataset.id === modelo);
+        if (modeloOpt) modeloInput.value = modeloOpt.value;
+        serieInput.value = serie;
+        marcaInput.value = marca;
+
+        form.action = `/componentes/editar/${id}/`;
+        wrapper.style.display = "block";
+        btnNuevo.style.display = "none";
+
+        actualizarMarca();
+        actualizarImagenModelo();
+
+        loadCharacteristics(() => {
+          for (const key in caracteristicas) {
+            const input = document.getElementById(key);
+            if (input) input.value = caracteristicas[key];
+          }
+        });
+      });
+    });
+
+    // Filtro, búsqueda, paginación
+    const tabla = document.getElementById("cuerpoTablaComponentes");
+    const buscar = document.getElementById("buscarComponente");
+    const mostrar = document.getElementById("mostrarComponentes");
+    const paginacion = document.getElementById("paginacionComponentes");
+    const info = document.getElementById("infoRegistrosComponentes");
+
+    let todas = Array.from(tabla.querySelectorAll("tr"));
+    let filtradas = [...todas];
+    let pagina = 1;
+    let porPagina = parseInt(mostrar.value);
+
+    function mostrarPagina(p) {
+      const ini = (p - 1) * porPagina;
+      const fin = ini + porPagina;
+      todas.forEach(f => f.style.display = "none");
+      filtradas.forEach((f, i) => { if (i >= ini && i < fin) f.style.display = ""; });
+      actualizarInfo(p);
+      actualizarPaginacion(p);
+    }
+
+    function actualizarInfo(p) {
+      const total = filtradas.length;
+      const ini = (p - 1) * porPagina + 1;
+      const fin = Math.min(ini + porPagina - 1, total);
+      info.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${ini} a ${fin} de ${total} registros`;
+    }
+
+    function actualizarPaginacion(p) {
+      const totalPag = Math.ceil(filtradas.length / porPagina);
+      paginacion.innerHTML = "";
+
+      if (p > 1) {
+        const ant = document.createElement("button");
+        ant.textContent = "Anterior";
+        ant.onclick = () => { pagina--; mostrarPagina(pagina); };
+        paginacion.appendChild(ant);
+      }
+
+      for (let i = 1; i <= totalPag; i++) {
+        const b = document.createElement("button");
+        b.textContent = i;
+        if (i === p) b.classList.add("active");
+        b.onclick = () => { pagina = i; mostrarPagina(i); };
+        paginacion.appendChild(b);
+      }
+
+      if (p < totalPag) {
+        const sig = document.createElement("button");
+        sig.textContent = "Siguiente";
+        sig.onclick = () => { pagina++; mostrarPagina(pagina); };
+        paginacion.appendChild(sig);
+      }
+    }
+
+    function aplicarFiltro() {
+      const texto = buscar.value.toLowerCase();
+      const estado = document.getElementById("filtroEstadoComponente").value.toLowerCase();
+
+      filtradas = todas.filter(fila => {
+        const contenido = fila.textContent.toLowerCase();
+        const estadoCol = fila.querySelector("td:nth-child(4)").innerText.toLowerCase();
+        return contenido.includes(texto) && (!estado || estadoCol === estado);
+      });
+
+      pagina = 1;
+      mostrarPagina(pagina);
+    }
+
+    buscar.addEventListener("keyup", aplicarFiltro);
+    mostrar.addEventListener("change", () => {
+      porPagina = parseInt(mostrar.value);
+      pagina = 1;
+      mostrarPagina(pagina);
+    });
+    document.getElementById("filtroEstadoComponente").addEventListener("change", aplicarFiltro);
+    aplicarFiltro();
+
+    form.addEventListener("submit", function (e) {
+      const modeloVal = modeloInput.value.trim();
+      const match = Array.from(document.getElementById("listaModelos").options)
+        .find(opt => opt.value === modeloVal);
+      if (!match) {
+        e.preventDefault();
+        alert("Debe seleccionar un modelo válido de la lista.");
+        return;
+      }
+      modeloHidden.value = match.getAttribute("data-id");
+    });
   });
-  
-});
 </script>
+<script src="{% static 'js/gestor_componente_lote.js' %}"></script>
 {% endblock %}

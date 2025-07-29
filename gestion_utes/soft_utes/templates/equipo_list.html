@@ -39,6 +39,18 @@
     border: 1px solid #ccc;
     background-color: #fff;
   }
+
+  .equipo-form {
+    border: 1px solid #cbd5e0;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 6px;
+    background-color: #f7fafc;
+  }
+
+  .equipo-form h3 {
+    margin-bottom: 10px;
+  }
 </style>
 {% endblock %}
 
@@ -46,7 +58,7 @@
 <div class="container">
   <h1>Equipos Informáticos</h1>
 
-  <div class="form-top">
+  <div class="form-row">
     <label for="tipoVisual">Tipo de Equipo:</label>
     <select id="tipoVisual">
       <option value="">-- Seleccione --</option>
@@ -54,10 +66,29 @@
       <option value="{{ tipo.idTipoEquipo }}">{{ tipo.nombre }}</option>
       {% endfor %}
     </select>
+
+    <label for="modeloLote">Modelo:</label>
+    <select id="modeloLote">
+      <option value="">-- Seleccione --</option>
+      {% for modelo in modelos %}
+      <option value="{{ modelo.idModelo }}">{{ modelo.nombreModelo }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="cantidadLote">Cantidad:</label>
+    <input type="number" id="cantidadLote" min="1">
+
+    <label for="fechaAdquisicionLote">Fecha de Compra:</label>
+    <input type="date" id="fechaAdquisicionLote">
+
+    <button type="button" id="registrarLoteBtn" class="btn-guardar">Registrar Lote</button>
   </div>
 
-  <div class="card" id="formEquipo">
-    <form id="formularioEquipo" method="POST" action="{% url 'equipo_create' %}">
+  <input type="hidden" id="idLote" name="idLote">
+  <input type="hidden" id="modoFormulario" value="crear">
+
+  <div id="formEquipo">
+    <form id="formularioEquipo" method="POST" action="">
       {% csrf_token %}
       <input type="hidden" id="idEquipoInformatico" name="idEquipoInformatico">
       <input type="hidden" id="tipoHidden" name="idTipoEquipo">
@@ -108,10 +139,10 @@
     </form>
   </div>
 
-  <div class="form-row">
-    <button id="btnMostrarFormulario" class="btn-guardar">Nuevo Equipo</button>
-  </div>
+  <!-- CONTENEDOR DE EQUIPOS GENERADOS POR LOTE -->
+  <div id="contenedorEquiposLote"></div>
 
+  {% csrf_token %}
   <div class="card-lista">
     <div class="table-header">
       <h2>Lista de Equipos Informáticos</h2>
@@ -136,285 +167,440 @@
       </div>
     </div>
 
-  <div class="tabla-responsive">
-    <table class="equipos-table">
-      <thead>
-        <tr>
-          <th>Equipo</th>
-          <th>N° Serie</th>
-          <th>Patrimonio</th>
-          <th>Nombre Equipo</th>
-          <th>Estado</th>
-          <th>Operaciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for equipo in equipos %}
-        <tr>
-          <td>{{ equipo.idTipoEquipo.nombre }}</td>
-          <td>{{ equipo.numeroSerie }}</td>
-          <td>{{ equipo.codigoPatrimonial }}</td>
-          <td>{{ equipo.nombreEquipoInformatico }}</td>
-          <td><span class="estado {{ equipo.estado|lower }}">{{ equipo.estado }}</span></td>
-          <td>
-            <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn azul">Ver</a>
-            <button class="btn amarillo"
-              data-id="{{ equipo.idEquipoInformatico }}"
-              data-nombre="{{ equipo.nombreEquipoInformatico }}"
-              data-serie="{{ equipo.numeroSerie|default:'' }}"
-              data-modelo="{% if equipo.idModelo %}{{ equipo.idModelo.idModelo }}{% endif %}"
-              data-tipo="{{ equipo.idTipoEquipo.idTipoEquipo }}"
-              data-patrimonio="{{ equipo.codigoPatrimonial|default:'' }}"
-              data-observacion="{{ equipo.observacionEquipo|default:'' }}"
-              data-garantia="{{ equipo.añoGarantia|default:'' }}"
-              data-descripcion="{{ equipo.descripcionEquipo }}"
-              data-estado="{{ equipo.estado }}"
-            >Editar</button>
-            <a href="{% url 'equipo_delete' equipo.idEquipoInformatico %}" class="btn rojo">Dar de Baja</a>
-            <a href="{% url 'asignar_componentes' idEquipoInformatico=equipo.idEquipoInformatico %}" class="btn morado">Asignar Componentes</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
- </div>
+    <div class="tabla-responsive">
+      <table class="equipos-table">
+        <thead>
+          <tr>
+            <th>Equipo</th>
+            <th>N° Serie</th>
+            <th>Patrimonio</th>
+            <th>Nombre Equipo</th>
+            <th>Estado</th>
+            <th>Operaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for equipo in equipos %}
+          <tr>
+            <td>{{ equipo.idTipoEquipo.nombre }}</td>
+            <td>{{ equipo.numeroSerie }}</td>
+            <td>{{ equipo.codigoPatrimonial }}</td>
+            <td>{{ equipo.nombreEquipoInformatico }}</td>
+            <td><span class="estado {{ equipo.estado|lower }}">{{ equipo.estado }}</span></td>
+            <td>
+              {% if equipo.estado == "ACTIVO" or equipo.estado == "ASIGNADO" %}
+                <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn azul">Ver</a>
+                <button class="btn amarillo"
+
+                  data-id="{{ equipo.idEquipoInformatico }}"
+                  data-nombre="{{ equipo.nombreEquipoInformatico }}"
+                  data-serie="{{ equipo.numeroSerie|default:'' }}"
+                  data-modelo="{% if equipo.idModelo %}{{ equipo.idModelo.idModelo }}{% endif %}"
+                  data-tipo="{{ equipo.idTipoEquipo.idTipoEquipo }}"
+                  data-patrimonio="{{ equipo.codigoPatrimonial|default:'' }}"
+                  data-observacion="{{ equipo.observacionEquipo|default:'' }}"
+                  data-garantia="{{ equipo.añoGarantia|default:'' }}"
+                  data-descripcion="{{ equipo.descripcionEquipo }}"
+                  data-estado="{{ equipo.estado }}"
+                >Editar</button>
+                <a href="{% url 'equipo_delete' equipo.idEquipoInformatico %}" class="btn rojo">Dar de Baja</a>
+                <a href="{% url 'asignar_componentes' idEquipoInformatico=equipo.idEquipoInformatico %}" class="btn morado">Asignar Componentes</a>
+              {% else %}
+                <a href="{% url 'equipo_reactivar' equipo.idEquipoInformatico %}" class="btn verde"
+                  onclick="return confirm('¿Deseas reactivar este equipo?');">✅ Reactivar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
     <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
     <div class="pagination" id="paginacion"></div>
   </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const tablaEquipos = document.querySelector(".equipos-table tbody");
-  const buscar = document.getElementById("buscarEquipos");
-  const filtroEstado = document.getElementById("filtroEstado");
-  const mostrar = document.getElementById("mostrar");
-  const paginacion = document.getElementById("paginacion");
-  const infoRegistros = document.getElementById("infoRegistros");
+  // URLs para las peticiones AJAX
+  const URL_CREAR_EQUIPO = "{% url 'equipo_create' %}";
+  const URL_LISTAR_EQUIPOS = "{% url 'equipo_list' %}";
+  const URL_CREAR_LOTE = "{% url 'crear_lote' %}";
+  const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
 
-  const btnMostrar = document.getElementById("btnMostrarFormulario");
-  const btnCancelar = document.getElementById("btnCancelarFormulario");
-  const form = document.getElementById("formEquipo");
-  const formAction = document.getElementById("formularioEquipo");
-  const originalAction = "{% url 'equipo_create' %}";
+  document.addEventListener("DOMContentLoaded", () => {
+    // Elementos del DOM
+    const tablaEquipos = document.querySelector(".equipos-table tbody");
+    const buscar = document.getElementById("buscarEquipos");
+    const filtroEstado = document.getElementById("filtroEstado");
+    const mostrar = document.getElementById("mostrar");
+    const paginacion = document.getElementById("paginacion");
+    const infoRegistros = document.getElementById("infoRegistros");
 
-  const idInput = document.getElementById("idEquipoInformatico");
-  const nombreInput = document.getElementById("nombre");
-  const serieInput = document.getElementById("serie");
-  const modeloInput = document.getElementById("modelo");
-  const tipoHidden = document.getElementById("tipoHidden"); // input hidden real
-  const tipoVisual = document.getElementById("tipoVisual"); // select visible
-  const patrimonioInput = document.getElementById("patrimonio");
-  const observacionInput = document.getElementById("observacion");
-  const garantiaInput = document.getElementById("garantia");
-  const imagenPreview = document.getElementById("imagenPreview");
-  const grupoImagenPreview = document.getElementById("grupoImagenPreview");
+    // Variables para la paginación
+    let todasLasFilas = Array.from(tablaEquipos.querySelectorAll("tr"));
+    let filasFiltradas = [...todasLasFilas];
+    let paginaActual = 1;
+    let filasPorPagina = parseInt(mostrar.value);
 
-  const modeloInputText = document.getElementById("modeloInput");
-  const modeloInputHidden = document.getElementById("modelo");
-  const dataListModelos = document.getElementById("listaModelos");
+    function mostrarPagina(pagina) {
+      const inicio = (pagina - 1) * filasPorPagina;
+      const fin = inicio + filasPorPagina;
+      todasLasFilas.forEach(fila => fila.style.display = 'none');
+      const filasAMostrar = filasFiltradas.slice(inicio, fin);
+      filasAMostrar.forEach(fila => fila.style.display = '');
+      actualizarInfo(pagina);
+      actualizarPaginacion(pagina);
+    }
 
-  // Sincronizar tipoVisual con tipoHidden
-  tipoVisual.addEventListener("change", () => {
-    tipoHidden.value = tipoVisual.value;
-  });
+    function actualizarInfo(pagina) {
+      const total = filasFiltradas.length;
+      const inicio = total === 0 ? 0 : (pagina - 1) * filasPorPagina + 1;
+      const fin = Math.min(inicio + filasPorPagina - 1, total);
 
-  modeloInputText.addEventListener("input", () => {
-  const valor = modeloInputText.value.trim().toLowerCase();
-  const opciones = dataListModelos.querySelectorAll("option");
-
-  let encontrado = false;
-  opciones.forEach(opcion => {
-    if (opcion.value.toLowerCase() === valor) {
-      modeloInputHidden.value = opcion.dataset.id;  // ← Aquí se asigna el ID real
-      encontrado = true;
-
-      const imagenUrl = opcion.dataset.imagen;
-      if (imagenUrl) {
-        imagenPreview.src = imagenUrl;
-        grupoImagenPreview.style.display = "flex";
+      if (total === 0) {
+        infoRegistros.textContent = "No se encontraron resultados.";
+      } else if (total <= filasPorPagina) {
+        infoRegistros.textContent = `Mostrando ${total} de ${total} registros`;
       } else {
-        imagenPreview.src = "";
-        grupoImagenPreview.style.display = "none";
+        infoRegistros.textContent = `Mostrando ${inicio} a ${fin} de ${total} registros`;
       }
     }
-  });
 
-  if (!encontrado) {
-    modeloInputHidden.value = "";  // ← Si no coincide, no se envía nada
-    imagenPreview.src = "";
-    grupoImagenPreview.style.display = "none";
-  }
-});
+    function actualizarPaginacion(pagina) {
+      const totalPaginas = Math.ceil(filasFiltradas.length / filasPorPagina);
+      paginacion.innerHTML = '';
 
-  btnMostrar.addEventListener("click", () => {
-    form.style.display = "block";
-    btnMostrar.style.display = "none";
-    formAction.action = originalAction;
-    formAction.reset();
-    idInput.value = "";
-    tipoHidden.value = tipoVisual.value;
-    imagenPreview.src = "";
-    grupoImagenPreview.style.display = "none";
-  });
-
-  btnCancelar.addEventListener("click", () => {
-    form.style.display = "none";
-    btnMostrar.style.display = "inline-block";
-    formAction.reset();
-    idInput.value = "";
-    formAction.action = originalAction;
-    tipoVisual.value = "";
-    tipoHidden.value = "";
-    imagenPreview.src = "";
-    grupoImagenPreview.style.display = "none";
-  });
-
-  document.querySelectorAll(".btn.amarillo").forEach(btn => {
-    btn.addEventListener("click", () => {
-      idInput.value = btn.dataset.id;
-      nombreInput.value = btn.dataset.nombre;
-      serieInput.value = btn.dataset.serie;
-
-      const modeloOption = [...dataListModelos.options].find(opt => opt.dataset.id === btn.dataset.modelo);
-      if (modeloOption) {
-        modeloInputText.value = modeloOption.value;
-        modeloInputHidden.value = modeloOption.dataset.id;
+      if (pagina > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Anterior';
+        prevBtn.onclick = () => {
+          paginaActual--;
+          mostrarPagina(paginaActual);
+        };
+        paginacion.appendChild(prevBtn);
       }
 
-      patrimonioInput.value = btn.dataset.patrimonio;
-      observacionInput.value = btn.dataset.observacion;
-      garantiaInput.value = btn.dataset.garantia;
+      const maxBotones = 5;
+      let inicioPagina = Math.max(1, pagina - Math.floor(maxBotones / 2));
+      let finPagina = Math.min(totalPaginas, inicioPagina + maxBotones - 1);
 
-      // Tipo equipo
-      tipoVisual.value = btn.dataset.tipo;
-      tipoHidden.value = btn.dataset.tipo;
+      if (finPagina - inicioPagina + 1 < maxBotones) {
+        inicioPagina = Math.max(1, finPagina - maxBotones + 1);
+      }
 
-      document.querySelectorAll('input[name="descripcionEquipo"]').forEach(radio => {
-        radio.checked = (radio.value.toLowerCase() === btn.dataset.descripcion.toLowerCase());
+      for (let i = inicioPagina; i <= finPagina; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === pagina) {
+          btn.classList.add('active');
+          btn.disabled = true;
+        }
+        btn.onclick = () => {
+          paginaActual = i;
+          mostrarPagina(paginaActual);
+        };
+        paginacion.appendChild(btn);
+      }
+
+      if (pagina < totalPaginas) {
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Siguiente';
+        nextBtn.onclick = () => {
+          paginaActual++;
+          mostrarPagina(paginaActual);
+        };
+        paginacion.appendChild(nextBtn);
+      }
+    }
+
+    function aplicarFiltros() {
+      const textoBusqueda = buscar.value.trim().toLowerCase();
+      const estadoSeleccionado = filtroEstado.value.toLowerCase();
+
+      filasFiltradas = todasLasFilas.filter(fila => {
+        const celdas = fila.getElementsByTagName('td');
+        let estado = '';
+        for (let celda of celdas) {
+          const estadoElement = celda.querySelector('.estado');
+          if (estadoElement) {
+            estado = estadoElement.textContent.trim().toLowerCase();
+            break;
+          }
+        }
+
+        const textoFila = fila.textContent.toLowerCase();
+        const coincideTexto = textoBusqueda === '' || 
+          Array.from(celdas).some(celda =>
+            celda.textContent.toLowerCase().includes(textoBusqueda)
+          );
+        const coincideEstado = estadoSeleccionado === '' || estado === estadoSeleccionado;
+
+        return coincideTexto && coincideEstado;
       });
 
-      const estadoSelect = document.getElementById("estado");
-      if (estadoSelect) {
-        for (const option of estadoSelect.options) {
-          option.selected = option.value === btn.dataset.estado;
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    }
+
+    let timeoutBusqueda;
+    buscar.addEventListener('input', () => {
+      clearTimeout(timeoutBusqueda);
+      timeoutBusqueda = setTimeout(aplicarFiltros, 300);
+    });
+
+    filtroEstado.addEventListener('change', aplicarFiltros);
+
+    mostrar.addEventListener('change', () => {
+      filasPorPagina = parseInt(mostrar.value);
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    });
+
+    function inicializarTabla() {
+      todasLasFilas = Array.from(tablaEquipos.querySelectorAll("tr"));
+      filasFiltradas = [...todasLasFilas];
+      aplicarFiltros();
+    }
+
+    const registrarLoteBtn = document.getElementById("registrarLoteBtn");
+    if (registrarLoteBtn) {
+      registrarLoteBtn.addEventListener("click", async () => {
+        const modeloId = document.getElementById("modeloLote").value;
+        const tipoId = document.getElementById("tipoVisual").value;
+        const fecha = document.getElementById("fechaAdquisicionLote").value;
+        const cantidad = parseInt(document.getElementById("cantidadLote").value);
+        const tipoTexto = document.querySelector("#tipoVisual option:checked")?.text;
+        const contenedor = document.getElementById("contenedorEquiposLote");
+
+        if (!modeloId || !tipoId || !fecha || !cantidad) {
+          alert("Debe completar todos los datos del lote.");
+          return;
         }
+
+        try {
+          const formData = new FormData();
+          formData.append("idModelo", modeloId);
+          formData.append("idTipoEquipo", tipoId);
+          formData.append("fechaAdquisicion", fecha);
+          formData.append("cantidad", cantidad);
+
+          const response = await fetch(URL_CREAR_LOTE, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
+            body: formData
+          });
+
+          if (!response.ok) throw new Error("Error al registrar lote.");
+
+          const data = await response.json();
+          const idLote = data.idLote;
+          contenedor.innerHTML = "";
+
+          for (let i = 1; i <= cantidad; i++) {
+            const form = document.createElement("form");
+            form.classList.add("card", "form-lote-generado");
+            form.method = "POST";
+            form.action = URL_CREAR_EQUIPO;
+
+            form.innerHTML = `
+              <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+              <input type="hidden" name="idModelo" value="${modeloId}">
+              <input type="hidden" name="fechaAdquisicion" value="${fecha}">
+              <input type="hidden" name="idTipoEquipo" value="${tipoId}">
+              <input type="hidden" name="idLote" value="${idLote}">
+
+              <div class="form-row">
+                <label>Tipo de Equipo:</label>
+                <input type="text" value="${tipoTexto}" readonly>
+                <label>Nombre:</label>
+                <input type="text" name="nombreEquipoInformatico" required>
+                <label>Número de Serie:</label>
+                <input type="text" name="numeroSerie" required>
+                <label>Código Patrimonial:</label>
+                <input type="text" name="codigoPatrimonial" required>
+                <label>Año de Garantía:</label>
+                <input type="number" name="añoGarantia" required>
+                <label>Observación:</label>
+                <input type="text" name="observacionEquipo" required>
+              </div>
+
+              <div class="form-row">
+                <label>Descripción:</label>
+                <div class="radio-group" style="display: flex; gap: 20px; margin-top: 8px;">
+                  <label><input type="radio" name="descripcionEquipo" value="De Marca" checked> De Marca</label>
+                  <label><input type="radio" name="descripcionEquipo" value="Compatible"> Compatible</label>
+                  <label><input type="radio" name="descripcionEquipo" value="Otros"> Otros</label>
+                </div>
+              </div>
+            `;
+
+            contenedor.appendChild(form);
+          }
+
+          const btnGuardarTodos = document.createElement("button");
+          btnGuardarTodos.textContent = "💾 Guardar Todos los Equipos del Lote";
+          btnGuardarTodos.classList.add("btn-guardar-lote");
+          btnGuardarTodos.style.marginTop = "20px";
+          btnGuardarTodos.style.padding = "10px 15px";
+          btnGuardarTodos.style.backgroundColor = "#007bff";
+          btnGuardarTodos.style.color = "white";
+          btnGuardarTodos.style.border = "none";
+          btnGuardarTodos.style.borderRadius = "5px";
+          btnGuardarTodos.style.cursor = "pointer";
+
+          btnGuardarTodos.addEventListener("click", async () => {
+            const forms = contenedor.querySelectorAll("form");
+            let errores = 0;
+            let formulariosValidos = [];
+
+            const seriesLote = new Set();
+            const codigosLote = new Set();
+
+            for (const form of forms) {
+              const nombre = form.querySelector('[name="nombreEquipoInformatico"]').value.trim();
+              const serie = form.querySelector('[name="numeroSerie"]').value.trim();
+              const codigo = form.querySelector('[name="codigoPatrimonial"]').value.trim();
+              const garantia = form.querySelector('[name="añoGarantia"]').value.trim();
+
+              form.style.border = "none";
+              let hayError = false;
+
+              if (!nombre || !serie || !codigo || !garantia) {
+                hayError = true;
+                errores++;
+                form.style.border = "2px solid red";
+              }
+
+              if (seriesLote.has(serie)) {
+                hayError = true;
+                errores++;
+                form.style.border = "2px solid red";
+              }
+
+              if (codigosLote.has(codigo)) {
+                hayError = true;
+                errores++;
+                form.style.border = "2px solid red";
+              }
+
+              if (!hayError) {
+                seriesLote.add(serie);
+                codigosLote.add(codigo);
+                formulariosValidos.push(form);
+              }
+            }
+
+            if (errores > 0) {
+              alert(`⚠️ Corrige los errores en ${errores} formulario(s) antes de continuar.`);
+              return;
+            }
+
+            let erroresEnvio = 0;
+            for (const form of formulariosValidos) {
+              const formData = new FormData(form);
+              try {
+                const response = await fetch(URL_CREAR_EQUIPO, {
+                  method: "POST",
+                  headers: {
+                    "X-CSRFToken": csrfToken
+                  },
+                  body: formData
+                });
+
+                if (!response.ok) throw new Error("Error al guardar equipo");
+
+                form.style.border = "2px solid green";
+                form.querySelectorAll("input, button").forEach(el => el.disabled = true);
+              } catch (error) {
+                erroresEnvio++;
+                form.style.border = "2px solid red";
+                console.error(error);
+              }
+            }
+
+            if (erroresEnvio === 0) {
+              alert("✅ Todos los equipos fueron registrados correctamente.");
+              window.location.href = URL_LISTAR_EQUIPOS;
+            } else {
+              alert(`⚠️ Se detectaron errores en ${erroresEnvio} formulario(s) durante el registro.`);
+            }
+          });
+
+          contenedor.appendChild(btnGuardarTodos);
+          alert(`✅ Lote registrado con ID: ${idLote}. Se generaron ${cantidad} formularios de equipos.`);
+        } catch (error) {
+          console.error("❌ Error al registrar lote:", error);
+          alert("Error al registrar el lote. Intenta de nuevo.");
+        }
+      });
+    }
+
+    inicializarTabla();
+  });
+
+
+    // Función para mostrar el formulario de edición
+    function mostrarFormularioEdicion(equipo) {
+      const form = document.getElementById("formularioEquipo");
+      document.getElementById("formEquipo").style.display = "block";
+      document.getElementById("modoFormulario").value = "editar";
+
+      // Llenar campos
+      document.getElementById("idEquipoInformatico").value = equipo.dataset.id;
+      document.getElementById("nombre").value = equipo.dataset.nombre;
+      document.getElementById("serie").value = equipo.dataset.serie;
+      document.getElementById("patrimonio").value = equipo.dataset.patrimonio;
+      document.getElementById("garantia").value = equipo.dataset.garantia;
+      document.getElementById("observacion").value = equipo.dataset.observacion;
+      document.getElementById("tipoHidden").value = equipo.dataset.tipo;
+      document.getElementById("modelo").value = equipo.dataset.modelo;
+
+      // Mostrar nombre en campo visible autocompletado
+      const modeloInput = document.getElementById("modeloInput");
+      const datalist = document.getElementById("listaModelos");
+      const opcionSeleccionada = datalist.querySelector(`option[data-id='${equipo.dataset.modelo}']`);
+      modeloInput.value = opcionSeleccionada?.value || "";
+
+      // Seleccionar radio de descripción
+      const radios = form.querySelectorAll("input[name='descripcionEquipo']");
+      radios.forEach(radio => {
+        radio.checked = (radio.value === equipo.dataset.descripcion);
+      });
+
+      // Mostrar imagen si existe
+      const previewGrupo = document.getElementById("grupoImagenPreview");
+      const imagen = document.getElementById("imagenPreview");
+      if (opcionSeleccionada && opcionSeleccionada.dataset.imagen) {
+        imagen.src = opcionSeleccionada.dataset.imagen;
+        previewGrupo.style.display = "flex";
+      } else {
+        imagen.src = "";
+        previewGrupo.style.display = "none";
       }
 
-      modeloInput.dispatchEvent(new Event("change"));
+      // Cambiar acción del formulario (reemplazar esto si usas una vista específica para editar)
+      form.action = `/equipos-informaticos/editar/${equipo.dataset.id}/`;
+    }
 
-      form.style.display = "block";
-      btnMostrar.style.display = "none";
-      formAction.action = `/equipos-informaticos/editar/${btn.dataset.id}/`;
+    // Eventos para todos los botones "Editar"
+    document.querySelectorAll(".btn.amarillo").forEach(btn => {
+      btn.addEventListener("click", () => {
+        mostrarFormularioEdicion(btn);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     });
-  });
 
-  modeloInput.addEventListener("change", function () {
-    const selectedOption = modeloInput.options[modeloInput.selectedIndex];
-    const imagenUrl = selectedOption?.dataset?.imagen;
-    if (imagenUrl) {
-      imagenPreview.src = imagenUrl;
-      grupoImagenPreview.style.display = "flex";
-    } else {
-      imagenPreview.src = "";
-      grupoImagenPreview.style.display = "none";
-    }
-  });
-
-  // Paginación y filtros
-  let todasLasFilas = Array.from(tablaEquipos.querySelectorAll("tr"));
-  let rows = [...todasLasFilas];
-  let paginaActual = 1;
-  let filasPorPagina = parseInt(mostrar.value);
-
-  function mostrarPagina(pagina) {
-    const inicio = (pagina - 1) * filasPorPagina;
-    const fin = inicio + filasPorPagina;
-    todasLasFilas.forEach(f => f.style.display = "none");
-    rows.forEach((fila, i) => {
-      if (i >= inicio && i < fin) fila.style.display = "";
+    // Cancelar edición
+    document.getElementById("btnCancelarFormulario").addEventListener("click", () => {
+      document.getElementById("formEquipo").style.display = "none";
+      document.getElementById("formularioEquipo").reset();
     });
-    actualizarInfo(pagina);
-    actualizarPaginacion(pagina);
-  }
-
-  function actualizarInfo(pagina) {
-    const total = rows.length;
-    const inicio = (pagina - 1) * filasPorPagina + 1;
-    const fin = Math.min(inicio + filasPorPagina - 1, total);
-    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
-  }
-
-  function actualizarPaginacion(pagina) {
-    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
-    paginacion.innerHTML = "";
-
-    if (pagina > 1) {
-      const prev = document.createElement("button");
-      prev.textContent = "Anterior";
-      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
-      paginacion.appendChild(prev);
-    }
-
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === pagina) btn.classList.add("active");
-      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
-      paginacion.appendChild(btn);
-    }
-
-    if (pagina < totalPaginas) {
-      const next = document.createElement("button");
-      next.textContent = "Siguiente";
-      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
-      paginacion.appendChild(next);
-    }
-  }
-
-  function aplicarFiltro() {
-    const texto = buscar.value.toLowerCase();
-    const estadoSeleccionado = filtroEstado.value;
-    rows = todasLasFilas.filter(row => {
-      const contenido = row.textContent.toLowerCase();
-      const coincideTexto = contenido.includes(texto);
-      if (!estadoSeleccionado) return coincideTexto;
-      const estado = row.querySelector("td:nth-child(5)").innerText.toLowerCase();
-      return coincideTexto && estado === estadoSeleccionado;
-    });
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
-  }
-
-  buscar.addEventListener("keyup", aplicarFiltro);
-  filtroEstado.addEventListener("change", aplicarFiltro);
-  mostrar.addEventListener("change", () => {
-    filasPorPagina = parseInt(mostrar.value);
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
-  });
-
-  aplicarFiltro();
-
-    formAction.addEventListener("submit", function (e) {
-    tipoHidden.value = tipoVisual.value;
-
-    if (!tipoHidden.value) {
-      e.preventDefault();
-      alert("Debe seleccionar un tipo de equipo.");
-      return;
-    }
-
-    if (!modeloInputHidden.value) {
-      e.preventDefault();
-      alert("Debe seleccionar un modelo válido de la lista.");
-      return;
-    }
-  });
-
-});
 
 </script>
+
+
 {% endblock %}

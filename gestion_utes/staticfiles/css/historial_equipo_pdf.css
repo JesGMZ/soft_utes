@@ -1,0 +1,103 @@
+body {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #333333;
+  margin: 0;
+  padding: 20px;
+  background-color: #ffffff;
+}
+
+/* Títulos */
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  font-size: 20px;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+h2 {
+  color: #2980b9;
+  font-size: 16px;
+  margin-top: 25px;
+  margin-bottom: 10px;
+}
+
+/* Descripción */
+.descripcion {
+  text-align: justify;
+  margin: 0 0 20px 0;
+  font-size: 12px;
+  color: #555555;
+}
+
+/* Tabla */
+table {
+  width: 100%;
+  border: 1px solid #cccccc;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 11px;
+}
+
+th, td {
+  border: 1px solid #cccccc;
+  padding: 6px;
+  text-align: left;
+}
+
+th {
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* Fila alterna (no funciona nth-child en xhtml2pdf, usar manual si es necesario) */
+/* Puedes alternar colores desde Django si es crítico */
+
+/* Columnas */
+td.item {
+  width: 6%;
+  text-align: center;
+}
+
+td.patrimonio {
+  width: 12%;
+}
+
+td.tipo {
+  width: 12%;
+}
+
+td.nombre {
+  width: 16%;
+}
+
+td.serie {
+  width: 16%;
+}
+
+td.marca {
+  width: 10%;
+}
+
+td.modelo {
+  width: 20%;
+}
+
+td.estado {
+  width: 8%;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Estados */
+.estado-activo {
+  color: #28a745;
+}
+
+.estado-inactivo {
+  color: #dc3545;
+}

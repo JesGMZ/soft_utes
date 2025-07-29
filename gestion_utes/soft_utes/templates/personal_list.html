@@ -4,7 +4,8 @@
 {% block title %}Gestión de Personal{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'estilos.css' %}">
+<link rel="stylesheet" href="{% static 'estilos_formularios_personal.css' %}">
+<link rel="stylesheet" href="{% static 'extras.css' %}">
 <style>
   #formPersonal {
     display: none;
@@ -46,11 +47,7 @@
       <input type="hidden" id="idPersonal" name="idPersonal">
       <div class="form-row">
         <label for="dni">DNI:</label>
-        <input type="text" id="dni" name="dni" required>
-        <label for="username">Usuario:</label>
-        <input type="text" id="username" name="username" required>
-        <label for="password">Contraseña:</label>
-        <input type="password" id="password" name="password" required>
+        <input type="text" id="dni" name="dni" maxlength="8" required>
       </div>
       <div class="form-row">
         <label for="nombres">Nombres:</label>
@@ -58,18 +55,20 @@
         <label for="apellidos">Apellidos:</label>
         <input type="text" id="apellidos" name="apellidos" required>
         <label for="telefono">Teléfono / Celular:</label>
-        <input type="text" id="telefono" name="telefono">
+        <input type="text" id="telefono" maxlength="9" name="telefono">
       </div>
       <div class="form-row">
         <label for="correo">Correo:</label>
         <input type="text" id="correo" name="correo">
-        <label for="establecimiento">Establecimiento:</label>
-        <select id="establecimiento" name="establecimiento" required>
+        <label for="establecimiento">Area:</label>
+        <select id="area" name="area" required>
           <option value="">-- Seleccione --</option>
-          {% for est in establecimientos %}
-          <option value="{{ est.idEstablecimiento }}">{{ est.NombreEstablecimiento }}</option>
+          {% for area in areas %}
+          <option value="{{ area.idArea }}">{{ area.areaNombre }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="form-row">
         <label for="cargo">Cargo:</label>
         <select id="cargo" name="cargo" required>
           <option value="">-- Seleccione --</option>
@@ -77,7 +76,7 @@
           <option value="{{ c.idCargo }}">{{ c.Descripcion }}</option>
           {% endfor %}
         </select>
-      </div>
+        </div>
       <div class="form-row">
         <button type="submit" class="btn-guardar">Guardar</button>
         <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
@@ -98,13 +97,17 @@
           </select>
           <span>registros</span>
         </div>
-        <div style="position: relative;">
-          <input type="text" id="buscarPersonal" class="search-input" placeholder="🔍 Buscar..." style="padding-left: 10px;">
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="buscarPersonal" class="search-input" placeholder="🔍 Buscar...">
+          <select id="filtroEstado" class="select-row">
+            <option value="">Todos</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
         </div>
       </div>
     </div>
 
-  
     <table class="equipos-table">
       <thead>
         <tr>
@@ -112,8 +115,7 @@
           <th>Nombres y Apellidos</th>
           <th>Correo</th>
           <th>Teléfono</th>
-          <th>Usuario</th>
-          <th>Establecimiento</th>
+          <th>Area</th>
           <th>Cargo</th>
           <th>Estado</th>
           <th style="min-width: 240px;">Operaciones</th>
@@ -126,12 +128,16 @@
           <td>{{ p.Nombres }}, {{ p.Apellidos }}</td>
           <td>{{ p.Correo }}</td>
           <td>{{ p.Telefono }}</td>
-          <td>{% if p.user %}{{ p.user.username }}{% else %}-{% endif %}</td>
-          <td>{{ p.idEstablecimiento.NombreEstablecimiento }}</td>
+          <td>{{ p.idArea.areaNombre }}</td>
           <td>{{ p.idCargo.Descripcion }}</td>
-          <td><span class="estado {% if p.user and p.user.is_active %}activo">Activo{% else %}inactivo">Inactivo{% endif %}</span></td>
+          <td>
+            <span class="estado {% if p.estado == 'ACTIVO' %}activo{% else %}inactivo{% endif %}">
+              {% if p.estado == 'ACTIVO' %}Activo{% else %}Inactivo{% endif %}
+            </span>
+          </td>
           <td>
             <div style="display: flex; gap: 8px;">
+              {% if p.estado == 'ACTIVO' %}
               <button class="btn amarillo btn-editar"
                 data-id="{{ p.idPersonal }}"
                 data-dni="{{ p.dni }}"
@@ -139,11 +145,15 @@
                 data-apellidos="{{ p.Apellidos }}"
                 data-telefono="{{ p.Telefono }}"
                 data-correo="{{ p.Correo }}"
-                data-username="{{ p.user.username }}"
-                data-establecimiento="{{ p.idEstablecimiento.idEstablecimiento }}"
+                data-area="{{ p.idArea.idArea }}"
                 data-cargo="{{ p.idCargo.idCargo }}"
-              >✏️ Editar</button>
+              >
+              ✏️ Editar
+              </button>
               <a href="{% url 'eliminar_personal' p.idPersonal %}" class="btn rojo">🗑️ Dar de Baja</a>
+              {% else %}
+              <a href="{% url 'personal_reactivar' p.idPersonal %}" class="btn morado">✅ Reactivar</a>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -169,13 +179,11 @@
 
     const inputId = document.getElementById("idPersonal");
     const inputDNI = document.getElementById("dni");
-    const inputUsername = document.getElementById("username");
-    const inputPassword = document.getElementById("password");
     const inputNombres = document.getElementById("nombres");
     const inputApellidos = document.getElementById("apellidos");
     const inputTelefono = document.getElementById("telefono");
     const inputCorreo = document.getElementById("correo");
-    const selectEstablecimiento = document.getElementById("establecimiento");
+    const selectArea = document.getElementById("area");
     const selectCargo = document.getElementById("cargo");
 
     const originalAction = "{% url 'crear_personal' %}";
@@ -201,28 +209,33 @@
       btn.addEventListener("click", function () {
         inputId.value = this.getAttribute("data-id");
         inputDNI.value = this.getAttribute("data-dni");
-        inputUsername.value = this.getAttribute("data-username") || '';
-        inputPassword.required = !this.getAttribute("data-username");
         inputNombres.value = this.getAttribute("data-nombres");
         inputApellidos.value = this.getAttribute("data-apellidos");
         inputTelefono.value = this.getAttribute("data-telefono");
         inputCorreo.value = this.getAttribute("data-correo");
-        selectEstablecimiento.value = this.getAttribute("data-establecimiento");
+        selectArea.value = this.getAttribute("data-area");
         selectCargo.value = this.getAttribute("data-cargo");
 
-        formElement.action = `/personal/editar/${inputId.value}/`;
+        const editUrl = "{% url 'editar_personal' 0 %}".replace("0", inputId.value);
+        formElement.action = editUrl;
+
         form.style.display = "block";
         btnMostrar.style.display = "none";
       });
     });
 
+    // Filtro y paginación
     const tabla = document.getElementById("tablaPersonal");
     const buscar = document.getElementById("buscarPersonal");
+    const filtroEstado = document.getElementById("filtroEstado");
     const mostrar = document.getElementById("mostrar");
     const paginacion = document.getElementById("paginacion");
     const infoRegistros = document.getElementById("infoRegistros");
 
-    let todasLasFilas = Array.from(tabla.querySelectorAll("tr"));
+    const todasLasFilas = Array.from(tabla.querySelectorAll("tr")).filter(
+      row => row.querySelector(".estado") !== null
+    );
+
     let rows = [...todasLasFilas];
     let paginaActual = 1;
     let filasPorPagina = parseInt(mostrar.value);
@@ -242,7 +255,9 @@
       const total = rows.length;
       const inicio = (pagina - 1) * filasPorPagina + 1;
       const fin = Math.min(inicio + filasPorPagina - 1, total);
-      infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+      infoRegistros.textContent = total === 0
+        ? "No se encontraron resultados."
+        : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
     }
 
     function actualizarPaginacion(pagina) {
@@ -274,12 +289,25 @@
 
     function aplicarFiltro() {
       const texto = buscar.value.toLowerCase();
-      rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+      const estadoSeleccionado = filtroEstado.value.toLowerCase();
+
+      rows = todasLasFilas.filter(row => {
+        const spanEstado = row.querySelector(".estado");
+        if (!spanEstado) return false;
+
+        const estado = spanEstado.classList.contains("activo") ? "activo" : "inactivo";
+        const coincideEstado = estadoSeleccionado === "" || estado === estadoSeleccionado;
+        const coincideTexto = row.textContent.toLowerCase().includes(texto);
+
+        return coincideTexto && coincideEstado;
+      });
+
       paginaActual = 1;
       mostrarPagina(paginaActual);
     }
 
     buscar.addEventListener("keyup", aplicarFiltro);
+    filtroEstado.addEventListener("change", aplicarFiltro);
     mostrar.addEventListener("change", () => {
       filasPorPagina = parseInt(mostrar.value);
       paginaActual = 1;

@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte - Historial de Equipos</title>
+  <link rel="stylesheet" href="{% static 'css/historial_equipo_pdf.css' %}">
+</head>
+<body>
+
+  <h1>Historial de Equipos Informáticos</h1>
+
+  <p class="descripcion">
+    Este reporte muestra un historial actualizado de todos los equipos informáticos registrados en el sistema,
+    incluyendo su información patrimonial, técnica y estado actual.
+  </p>
+
+  <h2>Listado de Equipos</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Patrimonio</th>
+        <th>Tipo de Equipo</th>
+        <th>Nombre</th>
+        <th>N° de Serie</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for equipo in historial %}
+      <tr>
+        <td class="item">{{ forloop.counter }}</td>
+        <td class="patrimonio">{{ equipo.codigoPatrimonial }}</td>
+        <td class="tipo">{{ equipo.idTipoEquipo.nombre }}</td>
+        <td class="nombre">{{ equipo.nombreEquipoInformatico }}</td>
+        <td class="serie">{{ equipo.numeroSerie }}</td>
+        <td class="marca">{{ equipo.idModelo.idMarca.nombreMarca }}</td>
+        <td class="modelo">{{ equipo.idModelo.nombreModelo }}</td>
+        <td class="estado">
+          {% if equipo.estado == "ACTIVO" or equipo.estado == "ASIGNADO" %}
+            <span class="estado-activo">{{ equipo.estado|capfirst }}</span>
+          {% else %}
+            <span class="estado-inactivo">{{ equipo.estado|capfirst }}</span>
+          {% endif %}
+        </td>
+
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" style="text-align:center; font-style: italic;">No hay equipos registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

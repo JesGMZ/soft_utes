@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Equipo Informático</title>
+  <link rel="stylesheet" href="{% static 'css/reporte_equipo.css' %}">
+</head>
+<body>
+
+  <div class="boton-imprimir">
+    <button onclick="window.print()">Imprimir</button>
+  </div>
+
+  <h1>Equipo Informático</h1>
+
+  <p class="descripcion">
+    A continuación, se detallan las características técnicas del equipo informático y los componentes que se asignan al usuario,
+    con el fin de formalizar la remisión de salida del mismo. La información consignada servirá como respaldo para el control patrimonial
+    y operativo de la entidad.
+  </p>
+
+  <h2>Datos del Equipo</h2>
+
+  <table class="tabla-equipo">
+    <tr>
+      <td class="imagen-placeholder">
+        {% if equipo.idModelo.Imagen %}
+          <img src="{{ equipo.idModelo.Imagen.url }}" alt="Imagen del equipo" class="imagen-equipo">
+        {% else %}
+          FOTO NO DISPONIBLE
+        {% endif %}
+      </td>
+      <td class="datos-equipo">
+        <p><strong>N° DE PATRIMONIO:</strong> {{ equipo.codigoPatrimonial|default:"No asignado" }}</p>
+        <p><strong>MARCA:</strong> {{ equipo.idModelo.idMarca.nombreMarca|default:"No especificado" }}</p>
+        <p><strong>TIPO DE EQUIPO:</strong> {{ equipo.idTipoEquipo.nombreTipoEquipo }}</p>
+        <p><strong>MODELO:</strong> {{ equipo.idModelo.nombreModelo|default:"No especificado" }}</p>
+        <p><strong>DESCRIPCIÓN:</strong> {{ equipo.get_descripcionEquipo_display|default:"-" }}</p>
+        <p><strong>UBICACIÓN:</strong> {{ equipo.ubicacion|default:"No especificada" }}</p>
+        <p><strong>NÚMERO DE SERIE:</strong> {{ equipo.numeroSerie|default:"No disponible" }}</p>
+        <p><strong>Año de Garantía:</strong> {{ equipo.añoGarantia }} año{{ equipo.añoGarantia|pluralize }}</p>
+        <p><strong>OBSERVACIÓN:</strong> {{ equipo.observacionEquipo|default:"Ninguna" }}</p>
+        <p><strong>Fecha Adquisición:</strong> {{ equipo.fechaAdquisicion|date:"d/m/Y"|default:"No especificada" }}</p>
+      </td>
+    </tr>
+  </table>
+
+  <h2>Componentes del Equipo</h2>
+
+  <table class="tabla-componentes">
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>N° Serie</th>
+          <th>Tipo</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in componentes %}
+        <tr>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.numeroSerie }}</td>
+          <td>{{ comp.idTipoComponente.nombre }}</td>
+          <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ comp.idModelo.nombreModelo }}</td>
+          <td>{{ comp.descripcionComponente }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center;">No hay componentes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+
+</body>
+</html>

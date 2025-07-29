@@ -5,6 +5,110 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'estilos_dashboard.css' %}">
+<style>
+  /* Estilos adicionales para los nuevos elementos */
+  .table-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    gap: 10px;
+  }
+  
+  .search-box {
+    position: relative;
+    flex-grow: 1;
+  }
+  
+  .search-box input {
+    width: 100%;
+    padding: 8px 15px 8px 35px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .search-box i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+  }
+  
+  .filter-controls select {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+  }
+  
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .pagination-info {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .pagination-links {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .pagination-link, .current-page {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+  }
+  
+  .pagination-link:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .current-page {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+
+  .estado-activo {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+  .estado-inactivo {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+.estado-asignado {
+  background-color: #e2e3e5;  
+  color: #495057;           
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -15,6 +119,7 @@
   </header>
 
   <div class="dashboard-grid">
+    <!-- Tus cards resumen se mantienen igual -->
     <div class="card-summary" onclick="toggleTable('equipos-table')">
       <div class="card-content">
         <div class="card-text">
@@ -51,29 +156,59 @@
 
   <!-- Tabla Equipos -->
   <div class="tabla-responsive" id="equipos-table-container" style="display: block;">
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="equipos-search" placeholder="Buscar equipos..." onkeyup="searchTable('equipos-table', this.value)">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="filter-controls">
+        <select id="equipos-filter" onchange="filterTable('equipos-table', this.value)">
+          <option value="all">Todos</option>
+          <option value="ACTIVO">Activos</option>
+          <option value="INACTIVO">Inactivos</option>
+          <option value="ASIGNADO">Asignados</option>
+        </select>
+      </div>
+    </div>
     <table id="equipos-table" class="equipos-table">
+      <!-- Tu tabla de equipos se mantiene igual -->
       <thead>
         <tr>
-          <th>Nombre</th>
           <th>Tipo</th>
+          <th>Numero de Serie</th>
+          <th>Marca</th>
           <th>Modelo</th>
+          <th>Nombre</th>
           <th>Código Patrimonial</th>
           <th>Estado</th>
           <th>DETALLES</th>
         </tr>
       </thead>
       <tbody>
-        {% for equipo in equipos %}
-        <tr>
-          <td>{{ equipo.nombreEquipoInformatico }}</td>
-          <td>{{ equipo.idTipoEquipo.nombre }}</td>
-          <td>{% if equipo.idModelo %}{{ equipo.idModelo.nombreModelo }}{% else %}-{% endif %}</td>
-          <td>{{ equipo.codigoPatrimonial|default:"-" }}</td>
-          <td>{{ equipo.estado }}</td>
-          <td>
-            <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn-detalles">Ver detalles</a>
-          </td>
-        </tr>
+        {% for equipo in equipos_page %}
+          <tr>
+            <td>{{ equipo.idTipoEquipo.nombre }}</td>
+            <td>{{ equipo.numeroSerie}}</td>
+            <td>{% if equipo.idModelo %}{{ equipo.idModelo.idMarca.nombreMarca }}{% else %}-{% endif %}</td>
+            <td>{% if equipo.idModelo %}{{ equipo.idModelo.nombreModelo }}{% else %}-{% endif %}</td>
+            <td>{{ equipo.nombreEquipoInformatico }}</td>
+            <td>{{ equipo.codigoPatrimonial|default:"-" }}</td>
+            <td>
+              <span class="
+                {% if equipo.estado == 'ACTIVO' %}estado-activo
+                {% elif equipo.estado == 'INACTIVO' %}estado-inactivo
+                {% elif equipo.estado == 'ASIGNADO' %}estado-asignado
+                {% else %}estado-sin-asignar{% endif %}
+              ">
+                {{ equipo.estado }}
+              </span>
+            </td>
+            <td>
+              <a href="{% url 'equipo_detalle' equipo.idEquipoInformatico %}" class="btn-detalles">
+                <i class="fas fa-eye"></i> Detalles
+              </a>
+            </td>
+          </tr>
         {% empty %}
         <tr>
           <td colspan="6" style="text-align:center; font-style: italic; color: #888;">
@@ -83,16 +218,55 @@
         {% endfor %}
       </tbody>
     </table>
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Mostrando {{ equipos_page.start_index }} - {{ equipos_page.end_index }} de {{ equipos_count }} equipos
+      </div>
+      <div class="pagination-links">
+        {% if equipos_page.has_previous %}
+          <a href="?equipos_page=1" class="pagination-link">&laquo; Primera</a>
+          <a href="?equipos_page={{ equipos_page.previous_page_number }}" class="pagination-link">Anterior</a>
+        {% endif %}
+        
+        {% for num in equipos_page.paginator.page_range %}
+          {% if equipos_page.number == num %}
+            <span class="current-page">{{ num }}</span>
+          {% elif num > equipos_page.number|add:'-3' and num < equipos_page.number|add:'3' %}
+            <a href="?equipos_page={{ num }}" class="pagination-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if equipos_page.has_next %}
+          <a href="?equipos_page={{ equipos_page.next_page_number }}" class="pagination-link">Siguiente</a>
+          <a href="?equipos_page={{ equipos_page.paginator.num_pages }}" class="pagination-link">Última &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <!-- Tabla Componentes -->
   <div class="tabla-responsive" id="componentes-table-container" style="display: none;">
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="componentes-search" placeholder="Buscar componentes..." onkeyup="searchTable('componentes-table', this.value)">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="filter-controls">
+        <select id="componentes-filter" onchange="filterTable('componentes-table', this.value)">
+          <option value="all">Todos</option>
+          <option value="Activo">Activos</option>
+          <option value="Inactivo">Inactivos</option>
+        </select>
+      </div>
+    </div>
     <table id="componentes-table" class="equipos-table">
+      <!-- Tu tabla de componentes se mantiene igual -->
       <thead>
         <tr>
           <th>Tipo</th>
           <th>Marca</th>
           <th>Modelo</th>
+          <th>Numero de Serie</th>
           <th>Equipo</th>
           <th>Nombre de PC</th>
           <th>Estado</th>
@@ -100,14 +274,24 @@
         </tr>
       </thead>
       <tbody>
-        {% for comp in componentes %}
+        {% for comp in componentes_page %}
         <tr>
           <td>{{ comp.idTipoComponente.nombre }}</td>
           <td>{{ comp.idModelo.idMarca.nombreMarca }}</td>
           <td>{{ comp.idModelo.nombreModelo }}</td>
-          <td>{{ comp.idEquipoInformatico.idTipoEquipo.nombre }}</td>
-          <td>{{ comp.idEquipoInformatico.nombreEquipoInformatico }}</td>
-          <td>{{ comp.estado }}</td>
+          <td>{{ comp.numeroSerie }}</td>
+          <td>{% if comp.idEquipoInformatico %}{{ comp.idEquipoInformatico.idTipoEquipo.nombre }}{% else %}SIN ASIGNAR{% endif %}</td>
+          <td>{% if comp.idEquipoInformatico %}{{ comp.idEquipoInformatico.nombreEquipoInformatico }}{% else %}SIN ASIGNAR{% endif %}</td>
+          <td>
+              <span class="
+                {% if comp.estado == 'ACTIVO' %}estado-activo
+                {% elif comp.estado == 'INACTIVO' %}estado-inactivo
+                {% elif comp.estado == 'ASIGNADO' %}estado-asignado
+                {% else %}estado-sin-asignar{% endif %}
+              ">
+                {{ comp.estado }}
+              </span>
+           </td>
           <td>
             <a href="{% url 'componente_detalle' comp.idComponente %}" class="btn-detalles">Ver Detalles</a>
           </td>
@@ -121,30 +305,72 @@
         {% endfor %}
       </tbody>
     </table>
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Mostrando {{ componentes_page.start_index }} - {{ componentes_page.end_index }} de {{ componentes_count }} componentes
+      </div>
+      <div class="pagination-links">
+        {% if componentes_page.has_previous %}
+          <a href="?componentes_page=1" class="pagination-link">&laquo; Primera</a>
+          <a href="?componentes_page={{ componentes_page.previous_page_number }}" class="pagination-link">Anterior</a>
+        {% endif %}
+        
+        {% for num in componentes_page.paginator.page_range %}
+          {% if componentes_page.number == num %}
+            <span class="current-page">{{ num }}</span>
+          {% elif num > componentes_page.number|add:'-3' and num < componentes_page.number|add:'3' %}
+            <a href="?componentes_page={{ num }}" class="pagination-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if componentes_page.has_next %}
+          <a href="?componentes_page={{ componentes_page.next_page_number }}" class="pagination-link">Siguiente</a>
+          <a href="?componentes_page={{ componentes_page.paginator.num_pages }}" class="pagination-link">Última &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <!-- Tabla Asignaciones -->
   <div class="tabla-responsive" id="asignaciones-table-container" style="display: none;">
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="asignaciones-search" placeholder="Buscar asignaciones..." onkeyup="searchTable('asignaciones-table', this.value)">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="filter-controls">
+        <select id="asignaciones-filter" onchange="filterTable('asignaciones-table', this.value)">
+          <option value="all">Todos</option>
+          <option value="Activo">Activas</option>
+          <option value="Inactivo">Inactivas</option>
+        </select>
+      </div>
+    </div>
     <table id="asignaciones-table" class="equipos-table">
+      <!-- Tu tabla de asignaciones se mantiene igual -->
       <thead>
         <tr>
-          <th>Equipo</th>
           <th>Tipo</th>
+          <th>Marca</th>
           <th>Modelo</th>
+          <th>Numero de Serie</th>
+          <th>Equipo</th>
           <th>Código Patrimonial</th>
-          <th>Fecha Asignación</th>
+          <th>Fecha de Compra</th>
           <th>Acta</th>
           <th>DETALLES</th>
         </tr>
       </thead>
       <tbody>
-        {% for asig in asignaciones %}
+        {% for asig in asignaciones_page %}
         <tr>
-          <td>{{ asig.idEquipoInformatico.nombreEquipoInformatico }}</td>
           <td>{{ asig.idEquipoInformatico.idTipoEquipo.nombre }}</td>
+          <th>{{ asig.idEquipoInformatico.idModelo.idMarca.nombreMarca }}</th>
           <td>{{ asig.idEquipoInformatico.idModelo.nombreModelo }}</td>
+          <td>{{ asig.idEquipoInformatico.numeroSerie }}</td>
+          <td>{{ asig.idEquipoInformatico.nombreEquipoInformatico }}</td>
           <td>{{ asig.idEquipoInformatico.codigoPatrimonial }}</td>
-          <td>{{ asig.fechaAsignacion|date:"d/m/Y H:i" }}</td>
+          <td>{{ asig.fechaAsignacion|date:"d/m/Y" }}</td>
           <td>{{ asig.idActaSalida.codReq }}</td>
           <td>
             <a href="{% url 'detalle_acta_salida' asig.idActaSalida.pk %}" class="btn-detalles">Ver Detalles</a>
@@ -159,10 +385,30 @@
         {% endfor %}
       </tbody>
     </table>
-  </div>
-
-  <div class="pagination-info">
-    Mostrando {{ componentes.count }} de {{ componentes_count }} registros
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Mostrando {{ asignaciones_page.start_index }} - {{ asignaciones_page.end_index }} de {{ asignaciones_count }} asignaciones
+      </div>
+      <div class="pagination-links">
+        {% if asignaciones_page.has_previous %}
+          <a href="?asignaciones_page=1" class="pagination-link">&laquo; Primera</a>
+          <a href="?asignaciones_page={{ asignaciones_page.previous_page_number }}" class="pagination-link">Anterior</a>
+        {% endif %}
+        
+        {% for num in asignaciones_page.paginator.page_range %}
+          {% if asignaciones_page.number == num %}
+            <span class="current-page">{{ num }}</span>
+          {% elif num > asignaciones_page.number|add:'-3' and num < asignaciones_page.number|add:'3' %}
+            <a href="?asignaciones_page={{ num }}" class="pagination-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if asignaciones_page.has_next %}
+          <a href="?asignaciones_page={{ asignaciones_page.next_page_number }}" class="pagination-link">Siguiente</a>
+          <a href="?asignaciones_page={{ asignaciones_page.paginator.num_pages }}" class="pagination-link">Última &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 
@@ -180,21 +426,38 @@
     });
 
     document.getElementById(containers[tableId]).style.display = 'block';
-
-    const table = document.getElementById(tableId);
-    const paginationInfo = document.querySelector('.pagination-info');
-
-    if (tableId === 'equipos-table') {
-      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ equipos_count }} equipos`;
-    } else if (tableId === 'asignaciones-table') {
-      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ asignaciones_count }} asignaciones`;
-    } else {
-      paginationInfo.textContent = `Mostrando ${table.querySelectorAll('tbody tr').length} de {{ componentes_count }} registros`;
-    }
   }
-</script>
 
-<script>
+  // Función para búsqueda en tiempo real
+  function searchTable(tableId, query) {
+    const table = document.getElementById(tableId);
+    const rows = table.querySelectorAll('tbody tr');
+    
+    query = query.toLowerCase();
+    
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(query) ? '' : 'none';
+    });
+  }
+
+  // Función para filtrar por estado
+  function filterTable(tableId, filterValue) {
+    const table = document.getElementById(tableId);
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      if (filterValue === 'all') {
+        row.style.display = '';
+      } else {
+        // Buscar la columna de estado (asumimos que es la penúltima columna)
+        const estado = row.cells[row.cells.length - 2].textContent.trim();
+        row.style.display = estado === filterValue ? '' : 'none';
+      }
+    });
+  }
+
+  // Tu script original para manejar SIN ASIGNAR
   document.addEventListener("DOMContentLoaded", function () {
     const componentesTable = document.getElementById("componentes-table");
     const filas = componentesTable.querySelectorAll("tbody tr");

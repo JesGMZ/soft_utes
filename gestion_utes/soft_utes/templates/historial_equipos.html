@@ -10,12 +10,19 @@
     background-color: #ecc94b;
     color: #1a202c;
   }
+
+  .btn.verde {
+    background-color: #26b919;
+    color: #ffffff;
+  }
+
   .pagination {
     display: flex;
     gap: 8px;
     margin-top: 15px;
     justify-content: center;
   }
+
   .pagination button {
     padding: 5px 12px;
     border: none;
@@ -23,10 +30,42 @@
     background: #e2e8f0;
     cursor: pointer;
   }
+
   .pagination button.active {
     background: #2b6cb0;
     color: white;
     font-weight: bold;
+  }
+
+  .estado {
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+  }
+
+  .activo {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+
+  .inactivo {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+    .asignado {
+    background-color: #fee2e2;
+    color: #7a7a7a;
+  }
+
+  .form-top {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
   }
 </style>
 {% endblock %}
@@ -36,12 +75,19 @@
   <h1>Historial de Equipos</h1>
 
   <div class="card-lista">
-    <div class="table-header">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h2>Reporte actualización de Equipos Informáticos</h2>
-      <button class="btn amarillo" onclick="window.print()">IMPRIMIR 🖨️</button>
+      <div style="display: flex; gap: 10px;">
+        <a class="btn amarillo" href="{% url 'historial_equipo_pdf' %}?estado={{ estado_actual }}&tipo={{ tipo_actual }}&buscar={{ request.GET.buscar }}">
+          IMPRIMIR🧾
+        </a>
+        <a class="btn verde" href="{% url 'exportar_equipos_excel' %}?estado={{ estado_actual }}&tipo={{ tipo_actual }}&buscar={{ request.GET.buscar }}">
+          EXCEL 📥
+        </a>
+      </div>
     </div>
 
-    <div class="form-top" style="justify-content: space-between;">
+    <form method="get" id="formFiltros" class="form-top">
       <div>
         <label for="mostrar">Mostrar</label>
         <select id="mostrar">
@@ -54,124 +100,92 @@
 
       <div>
         <label for="buscar">Buscar</label>
-        <input type="text" id="buscar" placeholder="🔍" class="search-input">
+        <input type="text" id="buscar" name="buscar" value="{{ request.GET.buscar }}" placeholder="🔍" class="search-input">
       </div>
+
+      <div>
+        <label for="filtroEstado">Estado</label>
+        <select id="filtroEstado" name="estado" onchange="document.getElementById('formFiltros').submit();">
+          <option value="" {% if estado_actual == "" %}selected{% endif %}>Todos</option>
+          <option value="activo" {% if estado_actual == "activo" %}selected{% endif %}>Activo</option>
+          <option value="inactivo" {% if estado_actual == "inactivo" %}selected{% endif %}>Inactivo</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filtroTipo">Tipo de Equipo</label>
+        <select id="filtroTipo" name="tipo" onchange="document.getElementById('formFiltros').submit();">
+          <option value="" {% if tipo_actual == "" %}selected{% endif %}>Todos</option>
+          {% for tipo in tipos %}
+            <option value="{{ tipo.nombre|lower }}" {% if tipo_actual == tipo.nombre|lower %}selected{% endif %}>
+              {{ tipo.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    <div class="tabla-responsive">
+      <table class="equipos-table" id="tablaEquipos">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Patrimonio</th>
+            <th>Equipo</th>
+            <th>Nombre de Equipo</th>
+            <th>N° de Serie</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tablaCuerpo">
+          {% for equipo in historial %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ equipo.codigoPatrimonial }}</td>
+            <td>{{ equipo.idTipoEquipo.nombre }}</td>
+            <td>{{ equipo.nombreEquipoInformatico }}</td>
+            <td>{{ equipo.numeroSerie }}</td>
+            <td>{{ equipo.idModelo.idMarca.nombreMarca }}</td>
+            <td>{{ equipo.idModelo.nombreModelo }}</td>
+            <td>
+              {% if equipo.estado == "ACTIVO" %}
+                <span class="estado activo">{{ equipo.estado|capfirst }}</span>
+              {% elif equipo.estado == "ASIGNADO" %}
+                <span class="estado asignado">{{ equipo.estado|capfirst }}</span>
+              {% else %}
+                <span class="estado inactivo">{{ equipo.estado|capfirst }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align:center; font-style: italic;">No hay equipos registrados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-<div class="tabla-responsive">
-    <table class="equipos-table" id="tablaEquipos">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Patrimonio</th>
-          <th>Equipo</th>
-          <th>Nombre de Equipo</th>
-          <th>N° de Serie</th>
-          <th>Marca</th>
-          <th>Modelo</th>
-        </tr>
-      </thead>
-      <tbody id="tablaCuerpo">
-        {% for equipo in historial %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>{{ equipo.codigoPatrimonial }}</td>
-          <td>{{ equipo.idTipoEquipo.nombre }}</td>
-          <td>{{ equipo.nombreEquipoInformatico }}</td>
-          <td>{{ equipo.numeroSerie }}</td>
-          <td>{{ equipo.idModelo.idMarca.nombreMarca }}</td>
-          <td>{{ equipo.idModelo.nombreModelo }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div>
     <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
-
     <div class="pagination" id="paginacion"></div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/historial_equipos.js' %}"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const tabla = document.getElementById("tablaCuerpo");
-  const buscar = document.getElementById("buscar");
-  const mostrar = document.getElementById("mostrar");
-  const paginacion = document.getElementById("paginacion");
-  const infoRegistros = document.getElementById("infoRegistros");
+  document.addEventListener("DOMContentLoaded", () => {
+    const buscarInput = document.getElementById("buscar");
 
-  let rows = Array.from(tabla.querySelectorAll("tr"));
-  let paginaActual = 1;
-  let filasPorPagina = parseInt(mostrar.value);
-
-  function mostrarPagina(pagina) {
-    const inicio = (pagina - 1) * filasPorPagina;
-    const fin = inicio + filasPorPagina;
-
-    rows.forEach((fila, i) => {
-      fila.style.display = (i >= inicio && i < fin) ? "" : "none";
+    buscarInput.addEventListener("input", () => {
+      clearTimeout(window.delayTimer);
+      window.delayTimer = setTimeout(() => {
+        document.getElementById("formFiltros").submit();
+      }, 500);  // Espera 500ms tras dejar de escribir para enviar
     });
-
-    actualizarInfo(pagina);
-    actualizarPaginacion(pagina);
-  }
-
-  function actualizarInfo(pagina) {
-    const total = rows.length;
-    const inicio = (pagina - 1) * filasPorPagina + 1;
-    const fin = Math.min(inicio + filasPorPagina - 1, total);
-    infoRegistros.textContent = `Mostrando de ${inicio} a ${fin} de ${total} registros`;
-  }
-
-  function actualizarPaginacion(pagina) {
-    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
-    paginacion.innerHTML = "";
-
-    if (pagina > 1) {
-      const prev = document.createElement("button");
-      prev.textContent = "Anterior";
-      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
-      paginacion.appendChild(prev);
-    }
-
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === pagina) btn.classList.add("active");
-      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
-      paginacion.appendChild(btn);
-    }
-
-    if (pagina < totalPaginas) {
-      const next = document.createElement("button");
-      next.textContent = "Siguiente";
-      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
-      paginacion.appendChild(next);
-    }
-  }
-
-  function aplicarFiltro() {
-    const texto = buscar.value.toLowerCase();
-
-    rows = Array.from(tabla.querySelectorAll("tr")).filter(row => {
-      return row.textContent.toLowerCase().includes(texto);
-    });
-
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
-  }
-
-  buscar.addEventListener("keyup", aplicarFiltro);
-  mostrar.addEventListener("change", () => {
-    filasPorPagina = parseInt(mostrar.value);
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
   });
-
-  // Inicializar
-  aplicarFiltro();
-});
 </script>
 {% endblock %}

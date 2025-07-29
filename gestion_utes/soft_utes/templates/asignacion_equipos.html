@@ -15,45 +15,19 @@
 
   <div class="card">
     <div class="detalle-equipo">
-      <div>
-        <strong>Código</strong>
-        <div>{{ acta.idFormato.codigoFormato }}</div>
-      </div>
-      <div>
-        <strong>Versión</strong>
-        <div>{{ acta.idFormato.versionFormato }}</div>
-      </div>
-      <div>
-        <strong>Cod-Req</strong>
-        <div>{{ acta.codReq }}</div>
-      </div>
-      <div>
-        <strong>Establecimiento</strong>
-        <div>{{ acta.idEstablecimiento.NombreEstablecimiento }}</div>
-      </div>
-      <div>
-        <strong>Personal</strong>
-        <div>{{ acta.idPersonal.Nombres }} {{ acta.idPersonal.Apellidos }}</div>
-      </div>
+      <div><strong>Código</strong> <div>{{ acta.idFormato.codigoFormato }}</div></div>
+      <div><strong>Versión</strong> <div>{{ acta.idFormato.versionFormato }}</div></div>
+      <div><strong>Cod-Req</strong> <div>{{ acta.codReq }}</div></div>
+      <div><strong>Establecimiento</strong> <div>{{ acta.idEstablecimiento.NombreEstablecimiento }}</div></div>
+      <div><strong>Personal</strong> <div>{{ acta.idPersonal.Nombres }} {{ acta.idPersonal.Apellidos }}</div></div>
     </div>
 
     {% if equipos_asignados %}
     <h3>Equipos Asignados</h3>
     <div style="display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 10px;">
-      <div>
-        <label>Mostrar</label>
-        <select id="mostrarEquiposAsignados" class="select-row">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-        <span>registros</span>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <input type="text" id="buscarEquiposAsignados" class="search-input" placeholder="🔍 Buscar...">
-      </div>
     </div>
-    <table class="tabla-componentes" id="tablaEquiposAsignados">
+
+    <table class="tabla-componentes">
       <thead>
         <tr>
           <th>Equipo</th>
@@ -84,31 +58,43 @@
         {% endfor %}
       </tbody>
     </table>
-    <p id="infoRegistrosAsignados" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
-    <div class="pagination" id="paginacionAsignados" style="margin-top: 10px;"></div>
+
+    <div class="pagination" style="margin-top: 10px;">
+      {% if equipos_asignados.has_other_pages %}
+      <span class="step-links">
+        {% if equipos_asignados.has_previous %}
+          <a href="?pagina_asignados=1&buscar_asignados={{ buscar_asignados }}">« Primero</a>
+          <a href="?pagina_asignados={{ equipos_asignados.previous_page_number }}&buscar_asignados={{ buscar_asignados }}">Anterior</a>
+        {% endif %}
+
+        <span>Página {{ equipos_asignados.number }} de {{ equipos_asignados.paginator.num_pages }}</span>
+
+        {% if equipos_asignados.has_next %}
+          <a href="?pagina_asignados={{ equipos_asignados.next_page_number }}&buscar_asignados={{ buscar_asignados }}">Siguiente</a>
+          <a href="?pagina_asignados={{ equipos_asignados.paginator.num_pages }}&buscar_asignados={{ buscar_asignados }}">Última »</a>
+        {% endif %}
+      </span>
+      {% endif %}
+    </div>
     {% else %}
     <p><em>No hay equipos asignados actualmente a esta acta.</em></p>
     {% endif %}
   </div>
 
+
   <div class="card">
     <h3>Lista de Equipos Disponibles</h3>
     <div style="display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 10px;">
-      <div>
-        <label>Mostrar</label>
-        <select id="mostrarEquiposDisponibles" class="select-row">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-        <span>registros</span>
-      </div>
+      <div></div>
       <div style="display: flex; gap: 10px;">
-        <input type="text" id="buscarEquiposDisponibles" class="search-input" placeholder="🔍 Buscar...">
+        <form method="get" style="display: flex; gap: 10px;">
+          <input type="text" name="buscar_disponibles" value="{{ buscar_disponibles }}" class="search-input" placeholder="🔍 Buscar...">
+          <button type="submit" class="btn azul">Buscar</button>
+        </form>
       </div>
     </div>
 
-    <table class="tabla-componentes" id="tablaEquiposDisponibles">
+    <table class="tabla-componentes">
       <thead>
         <tr>
           <th>Equipo</th>
@@ -145,74 +131,30 @@
       </tbody>
     </table>
 
-    <p id="infoRegistrosDisponibles" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
-    <div class="pagination" id="paginacionDisponibles" style="margin-top: 10px;"></div>
+    <div class="pagination" style="margin-top: 10px;">
+      {% if equipos.has_other_pages %}
+      <span class="step-links">
+        {% if equipos.has_previous %}
+          <a href="?pagina_disponibles=1&buscar_disponibles={{ buscar_disponibles }}">« Primero</a>
+          <a href="?pagina_disponibles={{ equipos.previous_page_number }}&buscar_disponibles={{ buscar_disponibles }}">Anterior</a>
+        {% endif %}
+
+        <span>Página {{ equipos.number }} de {{ equipos.paginator.num_pages }}</span>
+
+        {% if equipos.has_next %}
+          <a href="?pagina_disponibles={{ equipos.next_page_number }}&buscar_disponibles={{ buscar_disponibles }}">Siguiente</a>
+          <a href="?pagina_disponibles={{ equipos.paginator.num_pages }}&buscar_disponibles={{ buscar_disponibles }}">Última »</a>
+        {% endif %}
+      </span>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/paginationjs@2.1.5/dist/pagination.min.js"></script>
 <script>
-function inicializarTabla(tablaId, inputBuscarId, filtroEstadoId, selectMostrarId, paginacionId, infoId) {
-  const tabla = document.querySelector(`#${tablaId} tbody`);
-  const inputBuscar = document.getElementById(inputBuscarId);
-  const filtroEstado = document.getElementById(filtroEstadoId);
-  const selectMostrar = document.getElementById(selectMostrarId);
-  const paginacion = document.getElementById(paginacionId);
-  const infoRegistros = document.getElementById(infoId);
-  const filasOriginales = Array.from(tabla.querySelectorAll('tr'));
-
-  function aplicarFiltros() {
-    const texto = inputBuscar.value.toLowerCase();
-    const estado = filtroEstado.value;
-    return filasOriginales.filter(fila => {
-      const contenido = fila.textContent.toLowerCase();
-      const estadoTexto = fila.querySelector('.estado')?.classList[1] || '';
-      return contenido.includes(texto) && (estado === '' || estadoTexto === estado);
-    });
-  }
-
-  function mostrarPagina(pagina, datosFiltrados, tam) {
-    const inicio = (pagina - 1) * tam;
-    const fin = inicio + tam;
-    const visibles = datosFiltrados.slice(inicio, fin);
-    tabla.innerHTML = '';
-    visibles.forEach(f => tabla.appendChild(f));
-    infoRegistros.textContent = `Mostrando ${inicio + 1} a ${Math.min(fin, datosFiltrados.length)} de ${datosFiltrados.length} registros`;
-  }
-
-  function actualizarTabla() {
-    const tam = parseInt(selectMostrar.value);
-    const datos = aplicarFiltros();
-    mostrarPagina(1, datos, tam);
-
-    paginacion.innerHTML = '';
-    const totalPaginas = Math.ceil(datos.length / tam);
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.classList.toggle('active', i === 1);
-      btn.addEventListener('click', () => {
-        mostrarPagina(i, datos, tam);
-        Array.from(paginacion.children).forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-      paginacion.appendChild(btn);
-    }
-  }
-
-  inputBuscar.addEventListener('input', actualizarTabla);
-  filtroEstado.addEventListener('change', actualizarTabla);
-  selectMostrar.addEventListener('change', actualizarTabla);
-
-  actualizarTabla();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  inicializarTabla('tablaEquiposAsignados', 'buscarEquiposAsignados', 'filtroEstadoAsignados', 'mostrarEquiposAsignados', 'paginacionAsignados', 'infoRegistrosAsignados');
-  inicializarTabla('tablaEquiposDisponibles', 'buscarEquiposDisponibles', 'filtroEstadoDisponibles', 'mostrarEquiposDisponibles', 'paginacionDisponibles', 'infoRegistrosDisponibles');
-
   const forms = document.querySelectorAll('.form-asignacion');
   const notificacion = document.getElementById('notificacion');
 
@@ -235,6 +177,5 @@ document.addEventListener('DOMContentLoaded', () => {
       form.submit();
     }, 1500);
   }
-});
 </script>
 {% endblock %}

@@ -5,9 +5,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
-<link rel="stylesheet" href="{% static 'extras.css' %}">
 <style>
-  #formNuevaArea {
+  #formArea {
     display: none;
   }
   .pagination {
@@ -33,39 +32,37 @@
 
 {% block content %}
 <div class="container">
-
   <div class="form-top">
     <h1>Áreas</h1>
   </div>
 
   <div class="form-row">
-    <button type="button" id="btnMostrarFormulario" class="btn-guardar">Nueva Área</button>
+        <button id="btnMostrarFormulario" class="btn-guardar">Nueva Área</button>
   </div>
 
-  <!-- Formulario -->
-  <div class="card" id="formNuevaArea">
+  <div class="card" id="formArea">
     <form method="POST" id="areaForm" action="{% url 'crear_area' %}">
       {% csrf_token %}
       <input type="hidden" id="idArea" name="idArea">
 
       <div class="form-row">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre" required>
+        <label for="nombreArea">Nombre del Área:</label>
+        <input type="text" id="nombreArea" name="nombre" required>
 
-        <label for="establecimiento">Establecimiento:</label>
-        <select id="establecimiento" name="establecimiento" required>
+        <label for="idEstablecimiento">Establecimiento:</label>
+        <select id="idEstablecimiento" name="establecimiento" required>
+          <option value="">-- Seleccione --</option>
           {% for est in establecimientos %}
-            <option value="{{ est.idEstablecimiento }}">{{ est.NombreEstablecimiento }}</option>
+          <option value="{{ est.idEstablecimiento }}">{{ est.NombreEstablecimiento }}</option>
           {% endfor %}
         </select>
 
         <button type="submit" class="btn-guardar">Guardar</button>
-        <button type="button" class="btn-cancelar" id="btnCancelarFormulario">Cancelar</button>
+        <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
       </div>
     </form>
   </div>
 
-  <!-- Lista -->
   <div class="card-lista">
     <div class="table-header">
       <h2>Lista de Áreas</h2>
@@ -79,46 +76,40 @@
           </select>
           <span>registros</span>
         </div>
-        <div style="position: relative;">
-          <input type="text" id="buscarAreas" class="search-input" placeholder="🔍 Buscar..." style="padding-left: 10px;">
-          <select id="filtroEstado" class="select-row">
-            <option value="">Todos</option>
-            <option value="activo">ACTIVO</option>
-            <option value="inactivo">INACTIVO</option>
-          </select>
+        <div>
+          <input type="text" id="buscar" class="search-input" placeholder="🔍 Buscar...">
         </div>
       </div>
     </div>
 
-    <div class="tabla-responsive">
-      <table class="equipos-table">
-        <thead>
-          <tr>
-            <th>Área</th>
-            <th>Establecimiento</th>
-            <th>Estado</th>
-            <th>Operaciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaAreas">
-          {% for area in areas %}
-          <tr>
-            <td>{{ area.areaNombre }}</td>
-            <td>{{ area.idEstablecimiento.NombreEstablecimiento }}</td>
-            <td><span class="estado {{ area.estado|lower }}">{{ area.estado }}</span></td>
-            <td>
-              {% if area.estado == "ACTIVO" %}
-              <a href="{% url 'editar_area' area.idArea %}" class="btn amarillo btn-edit">✏️ Editar</a>
-              <a href="{% url 'eliminar_area' area.idArea %}" class="btn rojo btn-delete">🗑 Dar de Baja</a>
-              {% else %}
-              <a href="{% url 'reactivar_area' area.idArea %}" class="btn morado">✅ Reactivar</a>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <table class="equipos-table" id="tablaAreas">
+      <thead>
+        <tr>
+          <th>Área</th>
+          <th>Establecimiento</th>
+          <th>Estado</th>
+          <th>Operaciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuerpo">
+        {% for area in areas %}
+        <tr>
+          <td>{{ area.areaNombre }}</td>
+          <td>{{ area.idEstablecimiento.NombreEstablecimiento }}</td>
+          <td><span class="estado activo">Activo</span></td>
+          <td>
+            <button class="btn amarillo btn-editar"
+                    data-id="{{ area.idArea }}"
+                    data-nombre="{{ area.areaNombre }}"
+                    data-establecimiento="{{ area.idEstablecimiento.idEstablecimiento }}">
+              ✏️ Editar
+            </button>
+            <a href="{% url 'eliminar_area' area.idArea %}" class="btn rojo">🗑 Dar de Baja</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
     <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
     <div class="pagination" id="paginacion"></div>
@@ -131,35 +122,42 @@
 document.addEventListener("DOMContentLoaded", function () {
   const btnMostrar = document.getElementById("btnMostrarFormulario");
   const btnCancelar = document.getElementById("btnCancelarFormulario");
-  const formContainer = document.getElementById("formNuevaArea");
+  const form = document.getElementById("formArea");
   const formElement = document.getElementById("areaForm");
   const inputId = document.getElementById("idArea");
-  const inputNombre = document.getElementById("nombre");
-  const selectEstablecimiento = document.getElementById("establecimiento");
-
-  if (!btnMostrar || !formContainer || !formElement) {
-    console.error("Error: Elementos clave no encontrados.");
-    return;
-  }
+  const inputNombre = document.getElementById("nombreArea");
+  const selectEstablecimiento = document.getElementById("idEstablecimiento");
+  const originalAction = "{% url 'crear_area' %}";
 
   btnMostrar.addEventListener("click", () => {
-    formContainer.style.display = "block";
+    form.style.display = "block";
     btnMostrar.style.display = "none";
+    formElement.action = originalAction;
     formElement.reset();
     inputId.value = '';
   });
 
   btnCancelar.addEventListener("click", () => {
-    formContainer.style.display = "none";
+    form.style.display = "none";
     btnMostrar.style.display = "inline-block";
-    formElement.reset();
+    formElement.action = originalAction;
     inputId.value = '';
+    formElement.reset();
   });
 
-  // Filtro y paginación
-  const tabla = document.getElementById("tablaAreas");
-  const buscar = document.getElementById("buscarAreas");
-  const filtroEstado = document.getElementById("filtroEstado");
+  document.querySelectorAll(".btn-editar").forEach(btn => {
+    btn.addEventListener("click", () => {
+      inputId.value = btn.dataset.id;
+      inputNombre.value = btn.dataset.nombre;
+      selectEstablecimiento.value = btn.dataset.establecimiento;
+      formElement.action = `/areas/editar/${btn.dataset.id}/`;
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+    });
+  });
+
+  const tabla = document.getElementById("tablaCuerpo");
+  const buscar = document.getElementById("buscar");
   const mostrar = document.getElementById("mostrar");
   const paginacion = document.getElementById("paginacion");
   const infoRegistros = document.getElementById("infoRegistros");
@@ -184,9 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const total = rows.length;
     const inicio = (pagina - 1) * filasPorPagina + 1;
     const fin = Math.min(inicio + filasPorPagina - 1, total);
-    infoRegistros.textContent = total === 0
-      ? "No se encontraron resultados."
-      : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
   }
 
   function actualizarPaginacion(pagina) {
@@ -216,29 +212,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function aplicarFiltros() {
+  function aplicarFiltro() {
     const texto = buscar.value.toLowerCase();
-    const estado = filtroEstado.value;
-
-    rows = todasLasFilas.filter(row => {
-      const contenidoTexto = row.textContent.toLowerCase();
-      const estadoRow = row.querySelector(".estado")?.classList.contains("activo") ? "activo" : "inactivo";
-      return contenidoTexto.includes(texto) && (estado === "" || estado === estadoRow);
-    });
-
+    rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
     paginaActual = 1;
     mostrarPagina(paginaActual);
   }
 
-  buscar.addEventListener("keyup", aplicarFiltros);
-  filtroEstado.addEventListener("change", aplicarFiltros);
+  buscar.addEventListener("keyup", aplicarFiltro);
   mostrar.addEventListener("change", () => {
     filasPorPagina = parseInt(mostrar.value);
     paginaActual = 1;
     mostrarPagina(paginaActual);
   });
 
-  aplicarFiltros(); // Ejecutar al cargar
+  aplicarFiltro();
 });
 </script>
 {% endblock %}

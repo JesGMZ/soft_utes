@@ -103,7 +103,6 @@
           <td>{{ caracteristica.descripcionCaracteristica }}</td>
           <td>{{ caracteristica.idTipoComponente.nombre }}</td>
           <td>
-            {% if caracteristica.estado == "ACTIVO" %}
             <button class="btn amarillo btn-edit"
               data-id="{{ caracteristica.idCaracteristica }}"
               data-descripcion="{{ caracteristica.descripcionCaracteristica }}"
@@ -111,15 +110,9 @@
               ✏️ Editar
             </button>
             <a href="{% url 'caracteristica_delete' caracteristica.idCaracteristica %}" class="btn rojo"
-              onclick="return confirm('¿Deseas eliminar esta característica?')">
+               onclick="return confirm('¿Deseas eliminar esta característica?')">
               🗑 Eliminar
             </a>
-            {% else %}
-            <a href="{% url 'caracteristica_reactivar' caracteristica.idCaracteristica %}" class="btn morado"
-              onclick="return confirm('¿Deseas reactivar esta característica?')">
-              ✅ Reactivar
-            </a>
-            {% endif %}
           </td>
         </tr>
         {% endfor %}

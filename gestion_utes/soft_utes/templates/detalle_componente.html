@@ -15,7 +15,7 @@
   <div class="subtitulo-boton">
     <form method="post" action="">
       {% csrf_token %}
-      <a href="{% url 'componente_pdf' idComponente=componente.idComponente %}" class="btn verde">DESCARGAR PDF</a>
+      <button class="btn verde" onclick="window.print()">IMPRIMIR</button>
     </form>
   </div>
 

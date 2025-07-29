@@ -4,7 +4,7 @@
 {% block title %}Gestión de Componentes{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'asignacion_componentes.css' %}"> 
+<link rel="stylesheet" href="{% static 'asignacion.css' %}"> 
 {% endblock %}
 
 {% block content %}
@@ -12,20 +12,33 @@
   <h2>⚒ Asignación de Componentes a un Equipo Informático</h2>
 
   <div class="card">
-    <div id="notificacion" class="cabecera-liberado" style="display: none;"></div>
-    <div class="detalle-equipo ">
-      <div><strong>Nº de Serie</strong><div>{{ equipo.numeroSerie }}</div></div>
-      <div><strong>Descripción</strong><div>{{ equipo.descripcionEquipo }}</div></div>
-      <div><strong>Cod. Patrimonio</strong><div>{{ equipo.codigoPatrimonial }}</div></div>
-      <div><strong>Fecha Adquisición</strong><div>{{ equipo.fechaRegistro|date:"d/m/Y" }}</div></div>
-      <div><strong>Estado</strong><div>{{ equipo.estado }}</div></div>
-      <div><strong>Observación</strong><div>{{ equipo.observacionEquipo }}</div></div>
-      <div><strong>Garantía</strong><div>{{ equipo.añoGarantia }} años</div></div>
+  <div id="notificacion" class="cabecera-liberado" style="display: none;"></div>
+      <div class="detalle-equipo ">
+        <div><strong>Nº de Serie</strong><div>{{ equipo.numeroSerie }}</div></div>
+        <div><strong>Descripción</strong><div>{{ equipo.descripcionEquipo }}</div></div>
+        <div><strong>Cod. Patrimonio</strong><div>{{ equipo.codigoPatrimonial }}</div></div>
+        <div><strong>Fecha Adquisición</strong><div>{{ equipo.fechaRegistro|date:"d/m/Y" }}</div></div>
+        <div><strong>Estado</strong><div>{{ equipo.estado }}</div></div>
+        <div><strong>Observación</strong><div>{{ equipo.observacionEquipo }}</div></div>
+        <div><strong>Garantía</strong><div>{{ equipo.añoGarantia }} años</div></div>
+      </div>
+
+    <div style="display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 10px;">
+      <div>
+        <label>Mostrar</label>
+        <select id="mostrarAsignados" class="select-row">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+        <span>registros</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" id="buscarAsignados" class="search-input" placeholder="🔍 Buscar...">
+      </div>
     </div>
 
-    <h3>Componentes Asignados</h3>
-
-    <table class="tabla-componentes">
+    <table class="tabla-componentes" id="tablaAsignados">
       <thead>
         <tr>
           <th>Componente</th>
@@ -56,41 +69,32 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">No hay componentes asignados.</td></tr>
+        <tr><td colspan="8">No hay componentes asignados.</td></tr>
         {% endfor %}
       </tbody>
     </table>
-
-    <div class="pagination" style="margin-top: 10px;">
-      {% if componentes_asignados.has_other_pages %}
-      <span class="step-links">
-        {% if componentes_asignados.has_previous %}
-          <a href="?pagina_asignados=1&buscar_asignados={{ buscar_asignados }}">« Primero</a>
-          <a href="?pagina_asignados={{ componentes_asignados.previous_page_number }}&buscar_asignados={{ buscar_asignados }}">Anterior</a>
-        {% endif %}
-
-        <span>Página {{ componentes_asignados.number }} de {{ componentes_asignados.paginator.num_pages }}</span>
-
-        {% if componentes_asignados.has_next %}
-          <a href="?pagina_asignados={{ componentes_asignados.next_page_number }}&buscar_asignados={{ buscar_asignados }}">Siguiente</a>
-          <a href="?pagina_asignados={{ componentes_asignados.paginator.num_pages }}&buscar_asignados={{ buscar_asignados }}">Última »</a>
-        {% endif %}
-      </span>
-      {% endif %}
-    </div>
+    <p id="infoAsignados" class="info-tabla"></p>
+    <div class="pagination" id="paginacionAsignados"></div>
   </div>
 
   <div class="card">
-    <h3>Lista de Componentes Disponibles</h3>
+    <h3>Lista de Componentes Informáticos</h3>
     <div style="display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 10px;">
-      <div></div>
-      <form method="get" style="display: flex; gap: 10px;">
-        <input type="text" name="buscar_disponibles" value="{{ buscar_disponibles }}" class="search-input" placeholder="🔍 Buscar...">
-        <button type="submit" class="btn azul">Buscar</button>
-      </form>
+      <div>
+        <label>Mostrar</label>
+        <select id="mostrarDisponibles" class="select-row">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+        <span>registros</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" id="buscarDisponibles" class="search-input" placeholder="🔍 Buscar...">
+      </div>
     </div>
 
-    <table class="tabla-componentes">
+    <table class="tabla-componentes" id="tablaDisponibles">
       <thead>
         <tr>
           <th>Item</th>
@@ -127,56 +131,100 @@
         {% endfor %}
       </tbody>
     </table>
-
-    <div class="pagination" style="margin-top: 10px;">
-      {% if componentes_disponibles.has_other_pages %}
-      <span class="step-links">
-        {% if componentes_disponibles.has_previous %}
-          <a href="?pagina_disponibles=1&buscar_disponibles={{ buscar_disponibles }}">« Primero</a>
-          <a href="?pagina_disponibles={{ componentes_disponibles.previous_page_number }}&buscar_disponibles={{ buscar_disponibles }}">Anterior</a>
-        {% endif %}
-
-        <span>Página {{ componentes_disponibles.number }} de {{ componentes_disponibles.paginator.num_pages }}</span>
-
-        {% if componentes_disponibles.has_next %}
-          <a href="?pagina_disponibles={{ componentes_disponibles.next_page_number }}&buscar_disponibles={{ buscar_disponibles }}">Siguiente</a>
-          <a href="?pagina_disponibles={{ componentes_disponibles.paginator.num_pages }}&buscar_disponibles={{ buscar_disponibles }}">Última »</a>
-        {% endif %}
-      </span>
-      {% endif %}
-    </div>
+    <p id="infoDisponibles" class="info-tabla"></p>
+    <div class="pagination" id="paginacionDisponibles"></div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const forms = document.querySelectorAll('form');
-const notificacion = document.getElementById('notificacion');
+function inicializarTabla(tablaId, inputBuscarId, filtroEstadoId, selectMostrarId, paginacionId, infoId) {
+  const tabla = document.querySelector(`#${tablaId} tbody`);
+  const inputBuscar = document.getElementById(inputBuscarId);
+  const filtroEstado = document.getElementById(filtroEstadoId);
+  const selectMostrar = document.getElementById(selectMostrarId);
+  const paginacion = document.getElementById(paginacionId);
+  const infoRegistros = document.getElementById(infoId);
+  const filasOriginales = Array.from(tabla.querySelectorAll('tr'));
 
-forms.forEach(form => {
-  form.addEventListener('submit', function(event) {
-    const accion = this.querySelector('input[name="accion"]')?.value;
-    if (accion === "asignar") {
-      event.preventDefault();
-      mostrarNotificacion("✅ Componente asignado correctamente", this);
-    } else if (accion === "quitar") {
-      event.preventDefault();
-      mostrarNotificacion("🗑️ Componente liberado correctamente", this);
+  function aplicarFiltros() {
+    const texto = inputBuscar.value.toLowerCase();
+    const estado = filtroEstado.value;
+    return filasOriginales.filter(fila => {
+      const contenido = fila.textContent.toLowerCase();
+      const estadoTexto = fila.querySelector('.estado')?.classList[1] || '';
+      return contenido.includes(texto) && (estado === '' || estadoTexto === estado);
+    });
+  }
+
+  function mostrarPagina(pagina, datosFiltrados, tam) {
+    const inicio = (pagina - 1) * tam;
+    const fin = inicio + tam;
+    const visibles = datosFiltrados.slice(inicio, fin);
+    tabla.innerHTML = '';
+    visibles.forEach(f => tabla.appendChild(f));
+    infoRegistros.textContent = `Mostrando ${inicio + 1} a ${Math.min(fin, datosFiltrados.length)} de ${datosFiltrados.length} registros`;
+  }
+
+  function actualizarTabla() {
+    const tam = parseInt(selectMostrar.value);
+    const datos = aplicarFiltros();
+    mostrarPagina(1, datos, tam);
+
+    paginacion.innerHTML = '';
+    const totalPaginas = Math.ceil(datos.length / tam);
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.classList.toggle('active', i === 1);
+      btn.addEventListener('click', () => {
+        mostrarPagina(i, datos, tam);
+        Array.from(paginacion.children).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+      paginacion.appendChild(btn);
     }
-  });
-});
+  }
 
-function mostrarNotificacion(mensaje, form) {
-  notificacion.textContent = mensaje;
-  notificacion.style.display = 'block';
-  notificacion.style.backgroundColor = '#e6fffa';
-  notificacion.style.border = '1px solid #38b2ac';
-  notificacion.style.color = '#285e61';
-  setTimeout(() => {
-    notificacion.style.display = 'none';
-    form.submit();
-  }, 1500);
+  inputBuscar.addEventListener('input', actualizarTabla);
+  filtroEstado.addEventListener('change', actualizarTabla);
+  selectMostrar.addEventListener('change', actualizarTabla);
+
+  actualizarTabla();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarTabla('tablaAsignados', 'buscarAsignados', 'filtroEstadoAsignados', 'mostrarAsignados', 'paginacionAsignados', 'infoAsignados');
+  inicializarTabla('tablaDisponibles', 'buscarDisponibles', 'filtroEstadoDisponibles', 'mostrarDisponibles', 'paginacionDisponibles', 'infoDisponibles');
+
+  const forms = document.querySelectorAll('form');
+  const notificacion = document.getElementById('notificacion');
+
+  forms.forEach(form => {
+    form.addEventListener('submit', function(event) {
+      const accion = this.querySelector('input[name="accion"]')?.value;
+      if (accion === "asignar") {
+        event.preventDefault();
+        mostrarNotificacion("✅ Componente asignado correctamente", this);
+      } else if (accion === "quitar") {
+        event.preventDefault();
+        mostrarNotificacion("🗑️ Componente liberado correctamente", this);
+      }
+    });
+  });
+
+  function mostrarNotificacion(mensaje, form) {
+    notificacion.textContent = mensaje;
+    notificacion.style.display = 'block';
+    notificacion.style.backgroundColor = '#e6fffa';
+    notificacion.style.border = '1px solid #38b2ac';
+    notificacion.style.color = '#285e61';
+    setTimeout(() => {
+      notificacion.style.display = 'none';
+      form.submit();
+    }, 1500);
+  }
+});
 </script>
 {% endblock %}

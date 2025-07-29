@@ -4,71 +4,24 @@
 {% block title %}Guía de Acta de Salida{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'estilos_reporte_acta_pdf.css' %}">
+<link rel="stylesheet" href="{% static 'estilos_reporte_actas.css' %}">
 <style>
   @media print {
     header, footer, nav, .sidebar, .no-print, .navbar, .wrapper {
       display: none !important;
-      transform: scale(0.65);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
     }
 
     .container {
       max-width: 100%;
       padding: 0;
       box-shadow: none !important;
-      border: none;
+      border: none
     }
-
-    table, tr, td, th, thead, tbody {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
-
-    .form-row,
-    .signature-box,
-    .card {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
-
-    .page-break {
-      page-break-before: always;
-      margin-top: 80px; 
-    }
-  }
-
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-
-  .modal {
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    width: 500px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  }
-
-  .modal-group {
-    margin-bottom: 10px;
-  }
-
-  .modal-group label {
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  .modal-group input,
-  .modal-group select {
-    width: 100%;
-    padding: 6px;
   }
 </style>
 {% endblock %}
@@ -76,14 +29,15 @@
 {% block content %}
 <div class="container">
 
+  <!-- Botón Imprimir -->
   <div class="no-print" style="text-align: right; margin-bottom: 15px;">
     <button class="btn verde" onclick="window.print()">🖨️ Imprimir</button>
   </div>
 
-  <div class="card evitar-salto">
+  <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <img src="{% static 'icons/logo_utes.jpg' %}" alt="LOGO DE LA EMPRESA" style="width: 180px; height: 100px; object-fit: contain;">
+        <img src="{% static 'icons/logo.jpeg' %}" alt="LOGO DE LA EMPRESA" style="width: 180px; height: 100px; object-fit: contain;">
       </div>
       <div style="text-align: center;">
         <h2 style="margin: 0;">Guía de Acta de Salida</h2>
@@ -91,17 +45,29 @@
       </div>
       <div>
         <table style="font-size: 14px;">
-          <tr><td><strong>Código:</strong></td><td>{{ acta.idFormato.codigoFormato }}</td></tr>
-          <tr><td><strong>Versión:</strong></td><td>{{ acta.idFormato.versionFormato }}</td></tr>
-          <tr><td><strong>Fecha:</strong></td><td>{{ acta.idFormato.fechaFormato|date:"d-m-Y" }}</td></tr>
-          <tr><td><strong>Página:</strong></td><td>1 de 1</td></tr>
+          <tr>
+            <td><strong>Código:</strong></td>
+            <td>{{ acta.idFormato.codigoFormato }}</td>
+          </tr>
+          <tr>
+            <td><strong>Versión:</strong></td>
+            <td>{{ acta.idFormato.versionFormato }}</td>
+          </tr>
+          <tr>
+            <td><strong>Fecha:</strong></td>
+            <td>{{ acta.idFormato.fechaFormato|date:"d-m-Y" }}</td>
+          </tr>
+          <tr>
+            <td><strong>Página:</strong></td>
+            <td>1 de 1</td> 
+          </tr>
         </table>
       </div>
     </div>
 
     <hr style="margin: 20px 0;">
 
-    <div class="form-row" style="gap: 40px;">
+    <div class="form-row" style="display: flex; justify-content: flex-start; align-items: center; gap: 40px;">
       <div>
         <label><strong>COD-REQ:</strong></label>
         <input type="text" class="text" style="text-align: left;" value="{{ acta.codReq }}" readonly>
@@ -114,121 +80,97 @@
 
     <br>
 
-    {% for asignacion in equipos_asignados %}
-      {% if forloop.first or forloop.counter0|divisibleby:20 %}
-        {% if not forloop.first %}
-            </tbody></table><div class="page-break"></div>
-        {% endif %}
-        <table class="equipos-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Tipo</th>
-              <th>Marca</th>
-              <th>Modelo</th>
-              <th>Serie</th>
-              <th>Código Patrimonio</th>
-              <th>Observación</th>
-              <th>Descripción</th>
-            </tr>
-          </thead>
-          <tbody>
-      {% endif %}
-
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ asignacion.idEquipoInformatico.idTipoEquipo.nombre }}</td>
-        <td>{{ asignacion.idEquipoInformatico.idModelo.idMarca.nombreMarca }}</td>
-        <td>{{ asignacion.idEquipoInformatico.idModelo.nombreModelo }}</td>
-        <td>{{ asignacion.idEquipoInformatico.numeroSerie }}</td>
-        <td>{{ asignacion.idEquipoInformatico.codigoPatrimonial }}</td>
-        <td>{{ asignacion.idEquipoInformatico.observacionEquipo|default:"-" }}</td>
-        <td>{{ asignacion.idEquipoInformatico.descripcionEquipo }}</td>
-      </tr>
-
-      {% if forloop.last %}
-          </tbody>
-        </table>
-      {% endif %}
-    {% endfor %}
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Descripción</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Serie</th>
+          <th>Código Patrimonio</th>
+          <th>Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignacion in equipos_asignados %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ asignacion.idEquipoInformatico.descripcionEquipo }}</td>
+          <td>{{ asignacion.idEquipoInformatico.idModelo.idMarca.nombreMarca }}</td>
+          <td>{{ asignacion.idEquipoInformatico.idModelo.nombreModelo }}</td>
+          <td>{{ asignacion.idEquipoInformatico.numeroSerie }}</td>
+          <td>{{ asignacion.idEquipoInformatico.codigoPatrimonial }}</td>
+          <td>{{ asignacion.idEquipoInformatico.observacionEquipo|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;">No hay equipos asignados a esta acta.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
     <br>
+
+    <!-- BOTÓN para abrir el modal -->
     <button class="btn azul no-print" onclick="abrirModal()">✏️ Ingresar / Editar Datos</button>
+
     <br><br>
 
-    <!-- BLOQUE DE FIRMAS AL FINAL -->
-    <div class="form-row evitar-salto">
+    <div class="form-row">
       <div style="flex: 1;">
         <h3>Origen</h3>
         <p class="oficina"><strong>Oficina/Dependencia:</strong> {{ acta.oficina|default:"_______________" }}</p>
         <p class="entregado"><strong>Entregado por:</strong> {{ acta.entregadoPor|default:"_______________" }}</p>
         <p class="tipoEntrega"><strong>Tipo de Entrega:</strong> {{ acta.tipoEntrega|default:"_______________" }}</p>
-        <div class="signature-box evitar-salto">Sello / Firma</div>
+        <div class="signature-box">Sello / Firma</div>
       </div>
+
       <div style="flex: 1;">
         <h3>Destino</h3>
-        <p class="establecimiento"><strong>Establecimiento:</strong> {{ acta.idEstablecimiento.nombre|default:"_______________" }}</p>
-        <p class="recibido"><strong>Recibido por:</strong> {{ acta.recibidoPor.nombre|default:"_______________" }}</p>
+        <p class="establecimiento"><strong>Establecimiento:</strong> {{ acta.Establecimiento|default:"_______________" }}</p>
+        <p class="recibido"><strong>Recibido por:</strong> {{ acta.recibidoPor|default:"_______________" }}</p>
         <p class="fechaRecepcion"><strong>Fecha:</strong> {{ acta.fechaRecepcion|date:"d/m/Y"|default:"_______________" }}</p>
-        <div class="signature-box evitar-salto">Sello / Firma</div>
+        <div class="signature-box">Sello / Firma</div>
       </div>
     </div>
 
-    <p class="note">NOTA: Cualquier documento impreso diferente del original, y cualquier archivo electrónico que se encuentre fuera de la Intranet serán considerados como COPIA NO CONTROLADA</p>
+    <p class="note">
+      Aviso, se detalla el aviso en caso de cualquier copia del documento
+    </p>
   </div>
 </div>
 
-<!-- MODAL -->
-<div id="modalIngreso" class="modal-overlay">
+<!-- Modal -->
+<div id="modalIngreso" class="modal-overlay" style="display: none;">
   <div class="modal">
     <h3>Ingresar Datos</h3>
-    <h4 style="text-align: center;">Origen</h4>
     <form id="formModal">
       <div class="modal-group">
-        <label for="oficina">Oficina/Dependencia:</label>
-        <input type="text" id="oficina" name="oficina">
+        <label>Oficina/Dependencia:</label>
+        <input type="text" id="oficina" placeholder="Ej. Oficina de TI">
       </div>
-
       <div class="modal-group">
-        <label for="entregado">Entregado por:</label>
-        <input type="text" id="entregado" name="entregado">
+        <label>Entregado por:</label>
+        <input type="text" id="entregado" placeholder="Nombre del responsable">
       </div>
-
       <div class="modal-group">
-        <label for="tipoEntrega">Tipo de Entrega:</label>
-        <input type="text" id="tipoEntrega" name="tipoEntrega">
+        <label>Tipo de Entrega:</label>
+        <input type="text" id="tipoEntrega" placeholder="Ej. Asignación">
       </div>
-
-      <h4 style="text-align: center;">Destino</h4>
       <div class="modal-group">
-        <label for="idEstablecimiento"><strong>Establecimiento:</strong></label>
-        <select name="idEstablecimiento" id="idEstablecimiento" required>
-          <option value="">Seleccione un establecimiento</option>
-          {% for est in establecimientos %}
-            <option value="{{ est.idEstablecimiento }}" {% if acta.idEstablecimiento.idEstablecimiento == est.idEstablecimiento %}selected{% endif %}>
-              {{ est.NombreEstablecimiento }}
-            </option>
-          {% endfor %}
-        </select>
+        <label>Establecimiento:</label>
+        <input type="text" id="establecimiento" placeholder="Ej. Centro de Salud...">
       </div>
-
       <div class="modal-group">
-        <label for="idPersonal"><strong>Recibido por:</strong></label>
-        <select name="idPersonal" id="idPersonal" required>
-          <option value="">Seleccione un personal</option>
-          {% for per in personales %}
-            <option value="{{ per.idPersonal }}" {% if acta.recibidoPor.idPersonal == per.idPersonal %}selected{% endif %}>
-              {{ per.Nombres }}
-            </option>
-          {% endfor %}
-        </select>
+        <label>Recibido por:</label>
+        <input type="text" id="recibido" placeholder="Nombre del receptor">
       </div>
-
       <div class="modal-group">
-        <label for="fechaRecepcion">Fecha:</label>
-        <input type="date" id="fechaRecepcion" name="fechaRecepcion">
+        <label>Fecha:</label>
+        <input type="date" id="fechaRecepcion">
       </div>
-
       <div style="text-align: right;">
         <button type="button" class="btn azul" onclick="guardarDatos()">Guardar</button>
         <button type="button" class="btn rojo" onclick="cerrarModal()">Cancelar</button>
@@ -236,7 +178,9 @@
     </form>
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
   function abrirModal() {
     document.getElementById("modalIngreso").style.display = "flex";
@@ -247,25 +191,12 @@
   }
 
   function guardarDatos() {
-    const oficina = document.getElementById("oficina").value;
-    const entregado = document.getElementById("entregado").value;
-    const tipoEntrega = document.getElementById("tipoEntrega").value;
-
-    const establecimientoSelect = document.getElementById("idEstablecimiento");
-    const establecimientoText = establecimientoSelect.options[establecimientoSelect.selectedIndex].text;
-
-    const personalSelect = document.getElementById("idPersonal");
-    const personalText = personalSelect.options[personalSelect.selectedIndex].text;
-
-    const fecha = document.getElementById("fechaRecepcion").value;
-
-    document.querySelector("p.oficina").innerHTML = "<strong>Oficina/Dependencia:</strong> " + (oficina || "_______________");
-    document.querySelector("p.entregado").innerHTML = "<strong>Entregado por:</strong> " + (entregado || "_______________");
-    document.querySelector("p.tipoEntrega").innerHTML = "<strong>Tipo de Entrega:</strong> " + (tipoEntrega || "_______________");
-    document.querySelector("p.establecimiento").innerHTML = "<strong>Establecimiento:</strong> " + (establecimientoText || "_______________");
-    document.querySelector("p.recibido").innerHTML = "<strong>Recibido por:</strong> " + (personalText || "_______________");
-    document.querySelector("p.fechaRecepcion").innerHTML = "<strong>Fecha:</strong> " + (fecha || "_______________");
-
+    document.querySelector("p.oficina").innerHTML = "<strong>Oficina/Dependencia:</strong> " + document.getElementById("oficina").value;
+    document.querySelector("p.entregado").innerHTML = "<strong>Entregado por:</strong> " + document.getElementById("entregado").value;
+    document.querySelector("p.tipoEntrega").innerHTML = "<strong>Tipo de Entrega:</strong> " + document.getElementById("tipoEntrega").value;
+    document.querySelector("p.establecimiento").innerHTML = "<strong>Establecimiento:</strong> " + document.getElementById("establecimiento").value;
+    document.querySelector("p.recibido").innerHTML = "<strong>Recibido por:</strong> " + document.getElementById("recibido").value;
+    document.querySelector("p.fechaRecepcion").innerHTML = "<strong>Fecha:</strong> " + document.getElementById("fechaRecepcion").value;
     cerrarModal();
   }
 </script>

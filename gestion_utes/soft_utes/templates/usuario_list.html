@@ -50,46 +50,6 @@
     color: white;
     font-weight: bold;
   }
-
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 999;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-  }
-  .modal-content {
-    background: white;
-    margin: 10% auto;
-    padding: 20px;
-    width: 60%;
-    border-radius: 10px;
-    position: relative;
-  }
-  .modal-content input {
-    width: 100%;
-  }
-  .modal-content .form-row {
-    margin-bottom: 10px;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .modal-content .form-row label {
-    width: 100%;
-    font-weight: bold;
-  }
-  .modal-content h2 {
-    margin-top: 0;
-  }
-  .modal-content .close {
-    position: absolute;
-    right: 10px; top: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-  }
 </style>
 {% endblock %}
 
@@ -116,183 +76,118 @@
       </div>
     </div>
 
-    <div class="tabla-responsive">
-      <table class="equipos-table">
-        <thead>
-          <tr>
-            <th>Nombres</th>
-            <th>Apellidos</th>
-            <th>Área</th>
-            <th>Cargo</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          {% for p in personal %}
-          <tr>
-            <td>{{ p.Nombres }}</td>
-            <td>{{ p.Apellidos }}</td>
-            <td>{{ p.idArea.areaNombre }}</td>
-            <td>{{ p.idCargo.Descripcion }}</td>
-            <td>
-              <span class="estado {% if p.user and p.user.is_active %}activo">Activo{% else %}inactivo">Inactivo{% endif %}</span>
-            </td>
-            <td>
-              {% if not p.user %}
-              <button class="btn azul btn-asignar-usuario"
-                data-id="{{ p.idPersonal }}"
-                data-nombres="{{ p.Nombres }}"
-                data-apellidos="{{ p.Apellidos }}"
-                data-correo="{{ p.Correo }}"
-              >👤 Asignar Usuario</button>
-              {% else %}
-              <span style="color: gray;">Ya asignado</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="text-center">No hay personal registrado.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
+  <div class="tabla-responsive">
+    <table class="equipos-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombres</th>
+          <th>Apellidos</th>
+          <th>Correo</th>
+          <th>Estado</th>
+          <th>Último inicio</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {% for usuario in usuarios %}
+        <tr>
+          <td>{{ usuario.username }}</td>
+          <td>{{ usuario.first_name }}</td>
+          <td>{{ usuario.last_name }}</td>
+          <td>{{ usuario.email }}</td>
+          <td>
+            <span class="estado {% if usuario.is_active %}activo">Activo{% else %}inactivo">Inactivo{% endif %}</span>
+          </td>
+          <td>{{ usuario.last_login|default:"Nunca"|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center">No hay usuarios registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
     <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
     <div class="pagination" id="paginacion"></div>
-  </div>
-</div>
-
-<!-- MODAL ASIGNAR USUARIO -->
-<div id="modalAsignarUsuario" class="modal">
-  <div class="modal-content">
-    <span class="close" id="cerrarModal">&times;</span>
-    <h2>Asignar Usuario</h2>
-    <form method="POST" action="{% url 'asignar_usuario' %}">
-      {% csrf_token %}
-      <input type="hidden" name="idPersonal" id="modalIdPersonal">
-      <div class="form-row">
-        <label>Nombres:</label>
-        <input type="text" id="modalNombres" readonly>
-        <label>Apellidos:</label>
-        <input type="text" id="modalApellidos" readonly>
-        <label>Correo:</label>
-        <input type="text" id="modalCorreo" readonly>
-      </div>
-      <div class="form-row">
-        <label>Usuario:</label>
-        <input type="text" name="username" required>
-        <label>Contraseña:</label>
-        <input type="password" name="password" required>
-      </div>
-      <div class="form-row">
-        <button type="submit" class="btn-guardar">Guardar Usuario</button>
-      </div>
-    </form>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("searchInput");
-  const tableBody = document.getElementById("tableBody");
-  const mostrar = document.getElementById("mostrar");
-  const paginacion = document.getElementById("paginacion");
-  const infoRegistros = document.getElementById("infoRegistros");
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("tableBody");
+    const mostrar = document.getElementById("mostrar");
+    const paginacion = document.getElementById("paginacion");
+    const infoRegistros = document.getElementById("infoRegistros");
 
-  const todasLasFilas = Array.from(tableBody.querySelectorAll("tr"));
-  let rows = [...todasLasFilas];
-  let paginaActual = 1;
-  let filasPorPagina = parseInt(mostrar.value);
+    let todasLasFilas = Array.from(tableBody.querySelectorAll("tr"));
+    let rows = [...todasLasFilas];
+    let paginaActual = 1;
+    let filasPorPagina = parseInt(mostrar.value);
 
-  function mostrarPagina(pagina) {
-    const inicio = (pagina - 1) * filasPorPagina;
-    const fin = inicio + filasPorPagina;
-    todasLasFilas.forEach(fila => fila.style.display = "none");
-    rows.forEach((fila, i) => {
-      if (i >= inicio && i < fin) fila.style.display = "";
+    function mostrarPagina(pagina) {
+      const inicio = (pagina - 1) * filasPorPagina;
+      const fin = inicio + filasPorPagina;
+      todasLasFilas.forEach(fila => fila.style.display = "none");
+      rows.forEach((fila, i) => {
+        if (i >= inicio && i < fin) fila.style.display = "";
+      });
+      actualizarInfo(pagina);
+      actualizarPaginacion(pagina);
+    }
+
+    function actualizarInfo(pagina) {
+      const total = rows.length;
+      const inicio = (pagina - 1) * filasPorPagina + 1;
+      const fin = Math.min(inicio + filasPorPagina - 1, total);
+      infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+    }
+
+    function actualizarPaginacion(pagina) {
+      const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+      paginacion.innerHTML = "";
+
+      if (pagina > 1) {
+        const prev = document.createElement("button");
+        prev.textContent = "Anterior";
+        prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+        paginacion.appendChild(prev);
+      }
+
+      for (let i = 1; i <= totalPaginas; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        if (i === pagina) btn.classList.add("active");
+        btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+        paginacion.appendChild(btn);
+      }
+
+      if (pagina < totalPaginas) {
+        const next = document.createElement("button");
+        next.textContent = "Siguiente";
+        next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+        paginacion.appendChild(next);
+      }
+    }
+
+    function aplicarFiltro() {
+      const texto = searchInput.value.toLowerCase();
+      rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
+    }
+
+    searchInput.addEventListener("input", aplicarFiltro);
+    mostrar.addEventListener("change", () => {
+      filasPorPagina = parseInt(mostrar.value);
+      paginaActual = 1;
+      mostrarPagina(paginaActual);
     });
-    actualizarInfo(pagina);
-    actualizarPaginacion(pagina);
-  }
 
-  function actualizarInfo(pagina) {
-    const total = rows.length;
-    const inicio = (pagina - 1) * filasPorPagina + 1;
-    const fin = Math.min(inicio + filasPorPagina - 1, total);
-    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
-  }
-
-  function actualizarPaginacion(pagina) {
-    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
-    paginacion.innerHTML = "";
-
-    if (pagina > 1) {
-      const prev = document.createElement("button");
-      prev.textContent = "Anterior";
-      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
-      paginacion.appendChild(prev);
-    }
-
-    for (let i = 1; i <= totalPaginas; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      if (i === pagina) btn.classList.add("active");
-      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
-      paginacion.appendChild(btn);
-    }
-
-    if (pagina < totalPaginas) {
-      const next = document.createElement("button");
-      next.textContent = "Siguiente";
-      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
-      paginacion.appendChild(next);
-    }
-  }
-
-  function aplicarFiltro() {
-    const texto = searchInput.value.toLowerCase();
-    rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
-  }
-
-  searchInput.addEventListener("input", aplicarFiltro);
-  mostrar.addEventListener("change", () => {
-    filasPorPagina = parseInt(mostrar.value);
-    paginaActual = 1;
-    mostrarPagina(paginaActual);
+    aplicarFiltro();
   });
-
-  aplicarFiltro();
-
-  // Modal funcionalidad
-  const modal = document.getElementById("modalAsignarUsuario");
-  const cerrarModal = document.getElementById("cerrarModal");
-
-  document.querySelectorAll(".btn-asignar-usuario").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.getElementById("modalIdPersonal").value = btn.dataset.id;
-      document.getElementById("modalNombres").value = btn.dataset.nombres;
-      document.getElementById("modalApellidos").value = btn.dataset.apellidos;
-      document.getElementById("modalCorreo").value = btn.dataset.correo;
-      modal.style.display = "block";
-    });
-  });
-
-  cerrarModal.addEventListener("click", () => {
-    modal.style.display = "none";
-  });
-
-  window.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-});
 </script>
 {% endblock %}

@@ -4,8 +4,7 @@
 {% block title %}Gestión de Establecimientos{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'estilos_formularios.css' %}">
-<link rel="stylesheet" href="{% static 'extras.css' %}">
+<link rel="stylesheet" href="{% static 'estilos.css' %}">
 <style>
   #formEstablecimiento {
     display: none;
@@ -36,7 +35,7 @@
   <h1>Establecimientos</h1>
 
   <div class="form-row">
-    <button id="btnMostrarFormulario" class="btn-guardar">Nuevo Establecimiento</button>
+     <button id="btnMostrarFormulario" class="btn-guardar">Nuevo Establecimiento</button>
   </div>
 
   <!-- Formulario -->
@@ -44,10 +43,12 @@
     <form method="POST" id="establecimientoForm" action="{% url 'crear_establecimiento' %}">
       {% csrf_token %}
       <input type="hidden" id="idEstablecimiento" name="idEstablecimiento">
+
       <div class="form-row">
         <label for="nombre">Nombre del Establecimiento:</label>
         <input type="text" id="nombre" name="nombre" required>
       </div>
+
       <div class="form-actions">
         <button type="button" id="btnCancelarFormulario" class="btn-cancelar">Cancelar</button>
         <button type="submit" class="btn-guardar">Guardar</button>
@@ -55,7 +56,7 @@
     </form>
   </div>
 
-  <!-- Lista -->
+  <!-- Lista de establecimientos -->
   <div class="card-lista">
     <div class="table-header">
       <h2>Lista de Establecimientos</h2>
@@ -69,13 +70,8 @@
           </select>
           <span>registros</span>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
+        <div>
           <input type="text" id="buscarEstablecimiento" class="search-input" placeholder="🔍 Buscar...">
-          <select id="filtroEstado" class="select-row">
-            <option value="">Todos</option>
-            <option value="activo">ACTIVO</option>
-            <option value="inactivo">INACTIVO</option>
-          </select>
         </div>
       </div>
     </div>
@@ -92,31 +88,16 @@
         {% for e in establecimientos %}
         <tr>
           <td>{{ e.NombreEstablecimiento }}</td>
+          <td><span class="estado activo">Activo</span></td>
           <td>
-            <span class="estado {% if e.estado == 'ACTIVO' %}activo{% else %}inactivo{% endif %}">
-              {{ e.estado }}
-            </span>
+            <button class="btn amarillo btn-editar" data-id="{{ e.idEstablecimiento }}" data-nombre="{{ e.NombreEstablecimiento }}">
+              Editar
+            </button>
+            <a href="{% url 'eliminar_establecimiento' e.idEstablecimiento %}" class="btn rojo">Eliminar</a>
           </td>
-          <td>
-            {% if e.estado == 'ACTIVO' %}
-              <button class="btn amarillo btn-editar"
-                data-id="{{ e.idEstablecimiento }}"
-                data-nombre="{{ e.NombreEstablecimiento }}">
-                ✏️ Editar
-              </button>
-              <a href="{% url 'eliminar_establecimiento' e.idEstablecimiento %}" class="btn rojo">🗑 Dar de Baja</a>
-            {% else %}
-              <a href="{% url 'reactivar_establecimiento' e.idEstablecimiento %}" class="btn morado">✅ Reactivar</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="3" class="no-data">No hay establecimientos registrados</td>
         </tr>
         {% endfor %}
       </tbody>
-
     </table>
 
     <p id="infoRegistros" style="font-size: 14px; color: #4a5568; margin-top: 10px;"></p>
@@ -127,7 +108,113 @@
 
 {% block extra_js %}
 <script>
-  const ESTABLECIMIENTO_CREATE_URL = "{% url 'crear_establecimiento' %}";
+document.addEventListener("DOMContentLoaded", function () {
+  const btnMostrar = document.getElementById("btnMostrarFormulario");
+  const btnCancelar = document.getElementById("btnCancelarFormulario");
+  const form = document.getElementById("formEstablecimiento");
+  const formElement = document.getElementById("establecimientoForm");
+  const inputId = document.getElementById("idEstablecimiento");
+  const inputNombre = document.getElementById("nombre");
+  const originalAction = "{% url 'crear_establecimiento' %}";
+
+  btnMostrar.addEventListener("click", () => {
+    form.style.display = "block";
+    btnMostrar.style.display = "none";
+    formElement.action = originalAction;
+    formElement.reset();
+    inputId.value = '';
+  });
+
+  btnCancelar.addEventListener("click", () => {
+    form.style.display = "none";
+    btnMostrar.style.display = "inline-block";
+    formElement.action = originalAction;
+    inputId.value = '';
+    formElement.reset();
+  });
+
+  document.querySelectorAll(".btn-editar").forEach(btn => {
+    btn.addEventListener("click", () => {
+      inputId.value = btn.dataset.id;
+      inputNombre.value = btn.dataset.nombre;
+      formElement.action = `/establecimientos/editar/${btn.dataset.id}/`;
+      form.style.display = "block";
+      btnMostrar.style.display = "none";
+    });
+  });
+
+  // Paginación y búsqueda
+  const tabla = document.getElementById("tablaEstablecimientos");
+  const buscar = document.getElementById("buscarEstablecimiento");
+  const mostrar = document.getElementById("mostrar");
+  const paginacion = document.getElementById("paginacion");
+  const infoRegistros = document.getElementById("infoRegistros");
+
+  let todasLasFilas = Array.from(tabla.querySelectorAll("tr"));
+  let rows = [...todasLasFilas];
+  let paginaActual = 1;
+  let filasPorPagina = parseInt(mostrar.value);
+
+  function mostrarPagina(pagina) {
+    const inicio = (pagina - 1) * filasPorPagina;
+    const fin = inicio + filasPorPagina;
+    todasLasFilas.forEach(fila => fila.style.display = "none");
+    rows.forEach((fila, i) => {
+      if (i >= inicio && i < fin) fila.style.display = "";
+    });
+    actualizarInfo(pagina);
+    actualizarPaginacion(pagina);
+  }
+
+  function actualizarInfo(pagina) {
+    const total = rows.length;
+    const inicio = (pagina - 1) * filasPorPagina + 1;
+    const fin = Math.min(inicio + filasPorPagina - 1, total);
+    infoRegistros.textContent = total === 0 ? "No se encontraron resultados." : `Mostrando de ${inicio} a ${fin} de ${total} registros`;
+  }
+
+  function actualizarPaginacion(pagina) {
+    const totalPaginas = Math.ceil(rows.length / filasPorPagina);
+    paginacion.innerHTML = "";
+
+    if (pagina > 1) {
+      const prev = document.createElement("button");
+      prev.textContent = "Anterior";
+      prev.onclick = () => { paginaActual--; mostrarPagina(paginaActual); };
+      paginacion.appendChild(prev);
+    }
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === pagina) btn.classList.add("active");
+      btn.onclick = () => { paginaActual = i; mostrarPagina(i); };
+      paginacion.appendChild(btn);
+    }
+
+    if (pagina < totalPaginas) {
+      const next = document.createElement("button");
+      next.textContent = "Siguiente";
+      next.onclick = () => { paginaActual++; mostrarPagina(paginaActual); };
+      paginacion.appendChild(next);
+    }
+  }
+
+  function aplicarFiltro() {
+    const texto = buscar.value.toLowerCase();
+    rows = todasLasFilas.filter(row => row.textContent.toLowerCase().includes(texto));
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  }
+
+  buscar.addEventListener("keyup", aplicarFiltro);
+  mostrar.addEventListener("change", () => {
+    filasPorPagina = parseInt(mostrar.value);
+    paginaActual = 1;
+    mostrarPagina(paginaActual);
+  });
+
+  aplicarFiltro();
+});
 </script>
-<script src="{% static 'js/gestor_establecimiento.js' %}"></script>
 {% endblock %}

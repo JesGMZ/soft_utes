@@ -39,13 +39,14 @@
 }
 
 .topbar-logo {
-  height: 48px;
-  width: 48px;
-  border-radius: 50%;
-  border: 2px solid var(--color-light);
-  object-fit: cover;
+  height: 48px; /* Aumenta el tamaño */
+  width: 48px;  /* Asegura proporción cuadrada */
+  border-radius: 50%; /* Hace que el borde sea circular */
+  border: 2px solid var(--color-light); /* Borde visible con color claro */
+  object-fit: cover; /* Asegura que la imagen se ajuste correctamente */
   transition: transform 0.3s ease;
 }
+
 
 .topbar-logo:hover {
   transform: scale(1.05);
@@ -58,7 +59,7 @@
 }
 
 .topbar-subtitle {
-  color: var(--color-text);
+  color: var(--color-text); /* color blanco sólido */
   font-size: 0.85rem;
   font-weight: 400;
   margin-top: 2px;
@@ -82,7 +83,6 @@
   align-items: center;
   gap: 25px;
   height: 100%;
-  z-index: 1001; /* por encima del sidebar toggler */
 }
 
 /* Información de usuario */
@@ -146,7 +146,7 @@
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
-  z-index: 1002;
+  z-index: 1001;
 }
 
 .user-dropdown:hover .dropdown-menu,
@@ -183,7 +183,7 @@
   margin: 5px 0;
 }
 
-/* Toggler del Topbar (usuario) */
+/* Toggler para móvil */
 .topbar-toggler {
   display: none;
   background: transparent;
@@ -191,8 +191,8 @@
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
+  margin-left: auto;
   padding: 0 15px;
-  z-index: 1001;
 }
 
 /* Responsive */
@@ -200,11 +200,12 @@
   .topbar {
     padding: 0 10px;
   }
-
+  
   .topbar-toggler {
     display: block;
+    order: 2;
   }
-
+  
   .topbar-user-container {
     position: fixed;
     top: 60px;
@@ -221,28 +222,30 @@
     height: auto;
     align-items: flex-start;
   }
-
+  
   .topbar-user-container.active {
     transform: translateY(0);
     opacity: 1;
   }
-
+  
   .user-info {
     text-align: left;
     width: 100%;
   }
-
+  
   .user-dropdown {
     width: 100%;
     height: auto;
     justify-content: flex-start;
   }
-
+  
   .dropdown-menu {
     position: relative;
     width: 100%;
     margin-top: 10px;
     box-shadow: none;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.9);
   }
+
+
 }
